@@ -5,6 +5,9 @@
     "engines": {
         "node": ">=16"
     },
+    "scripts": {
+        "deploy": "npx hardhat deploy"
+    },
     "devDependencies": {
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",
         "@nomiclabs/hardhat-ethers": "yarn:hardhat-deploy-ethers",

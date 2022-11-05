@@ -3,3 +3,4 @@
 #ganache -b 2 --server.ws --database.dbPath "./db"
 
 ganache --server.ws --database.dbPath "./db"
+ganache --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk"
