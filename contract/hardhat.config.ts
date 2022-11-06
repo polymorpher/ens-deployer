@@ -37,8 +37,9 @@ const hardhatUserconfig: HardhatUserConfig = {
     },
     local: {
       url: process.env.LOCAL_URL || 'http://localhost:8545',
-      accounts: { mnemonic: process.env.TEST_MNEMONIC },
-      live: false
+      accounts: { mnemonic: process.env.LOCAL_MNEMONIC },
+      live: false,
+      saveDeployments: false
     },
     testnet: {
       url: process.env.TESTNET_URL,
