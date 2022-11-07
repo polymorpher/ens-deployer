@@ -56,6 +56,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\''+JSON.stringify({
     ENSRegistry: await ens.address,
+    BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
     FIFSRegistrar:  await ensDeployer.fifsRegistrar(),
     ReverseRegistrar: await ensDeployer.reverseRegistrar(),
     BaseRegistrar: await ensDeployer.baseRegistrar(),
