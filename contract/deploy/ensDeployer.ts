@@ -49,10 +49,12 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log('tx', receipt.transactionHash)
   const ens = await ethers.getContractAt('ENSRegistry', await ensDeployer.ens())
   console.log('ens owner:', await ens.owner(new Uint8Array(32)))
-  const resolverNode =  ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), await ensDeployer.RESOLVER_LABEL()]))
-  const reverseRegNode =  ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), await ensDeployer.REVERSE_REGISTRAR_LABEL()]))
+  const resolverNode =  ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('resolver'))]))
+  const reverseRegNode =  ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('reverse'))]))
   console.log('resolver node owner:', await ens.owner(resolverNode))
   console.log('reverse registrar node owner:', await ens.owner(reverseRegNode))
+
+  console.log('')
 }
 f.tags = ['ENSDeployer']
 export default f
