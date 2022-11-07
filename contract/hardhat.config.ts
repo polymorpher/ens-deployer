@@ -76,8 +76,7 @@ const hardhatUserconfig: HardhatUserConfig = {
     alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
-    strict: true,
-    only: [':Burner$']
+    strict: true
   }
 }
 
