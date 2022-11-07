@@ -54,7 +54,17 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log('resolver node owner:', await ens.owner(resolverNode))
   console.log('reverse registrar node owner:', await ens.owner(reverseRegNode))
 
-  console.log('')
+  console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\''+JSON.stringify({
+    ENSRegistry: await ens.address,
+    FIFSRegistrar:  await ensDeployer.fifsRegistrar(),
+    ReverseRegistrar: await ensDeployer.reverseRegistrar(),
+    BaseRegistrar: await ensDeployer.baseRegistrar(),
+    MetadataService: await ensDeployer.metadataService(),
+    NameWrapper: await ensDeployer.nameWrapper(),
+    ETHRegistrarController: await ensDeployer.registrarController(),
+    PublicResolver: await ensDeployer.publicResolver(),
+    UniversalResolver: await ensDeployer.universalResolver()
+  },null, 2) + '\'')
 }
 f.tags = ['ENSDeployer']
 export default f
