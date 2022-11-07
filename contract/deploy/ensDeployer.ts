@@ -64,7 +64,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     ETHRegistrarController: await ensDeployer.registrarController(),
     PublicResolver: await ensDeployer.publicResolver(),
     UniversalResolver: await ensDeployer.universalResolver()
-  }) + '\'')
+  },null, 2) + '\'')
 }
 f.tags = ['ENSDeployer']
 export default f
