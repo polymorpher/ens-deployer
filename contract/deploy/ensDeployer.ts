@@ -54,6 +54,8 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log('resolver node owner:', await ens.owner(resolverNode))
   console.log('reverse registrar node owner:', await ens.owner(reverseRegNode))
 
+  const Multicall = await deploy('Multicall3', {from: deployer})
+
   console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\''+JSON.stringify({
     ENSRegistry: await ens.address,
     BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
@@ -64,7 +66,8 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     NameWrapper: await ensDeployer.nameWrapper(),
     ETHRegistrarController: await ensDeployer.registrarController(),
     PublicResolver: await ensDeployer.publicResolver(),
-    UniversalResolver: await ensDeployer.universalResolver()
+    UniversalResolver: await ensDeployer.universalResolver(),
+    Multicall: await Multicall.address,
   }) + '\'')
 }
 f.tags = ['ENSDeployer']
