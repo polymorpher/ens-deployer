@@ -22,7 +22,7 @@ const hardhatUserconfig: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: 0,
-    operator: 1
+    owner: 1
   },
   defaultNetwork: 'hardhat',
   networks: {
@@ -46,7 +46,8 @@ const hardhatUserconfig: HardhatUserConfig = {
       accounts: { mnemonic: process.env.TEST_MNEMONIC },
       chainId: 1666700000,
       live: true,
-      gasMultiplier: 2
+      gasMultiplier: 2,
+      saveDeployments: false
     },
     mainnet: {
       url: process.env.MAINNET_URL,
