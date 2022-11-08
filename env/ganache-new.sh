@@ -3,4 +3,4 @@
 #ganache -b 2 --server.ws --database.dbPath "./db"
 
 rm -rf db
-ganache --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk"
+ganache -b 2 --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk"
