@@ -4,6 +4,7 @@ import { ethers } from 'hardhat'
 const f = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
+  const TLD = process.env.TLD || 'country'
   const OracleDeployer = await deploy("OracleDeployer", {from: deployer, args: [1, [1000, 2000, 3000, 4000, 5000]]})
   const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracle = await oracleDeployer.oracle()
@@ -17,7 +18,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const ENSPublicResolverDeployer = await deploy("ENSPublicResolverDeployer", {from: deployer, libraries: {ENSUtils: ENSUtils.address}})
   const ENSDeployer = await deploy('ENSDeployer', {
     from: deployer,
-    args: ['country', priceOracle],
+    args: [TLD, priceOracle],
     log: true,
     autoMine: true,
     libraries:{
