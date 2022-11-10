@@ -45,7 +45,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log('- universalResolver deployed to:', await ensDeployer.universalResolver())
 
-  const receipt = await ensDeployer.transferOwner(deployer, 'country').then(tx=>tx.wait())
+  const receipt = await ensDeployer.transferOwner(deployer).then(tx=>tx.wait())
   console.log('tx', receipt.transactionHash)
   const ens = await ethers.getContractAt('ENSRegistry', await ensDeployer.ens())
   console.log('ens owner:', await ens.owner(new Uint8Array(32)))

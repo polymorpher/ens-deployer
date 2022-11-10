@@ -52,7 +52,8 @@ library ENSRegistryDeployer{
         );
 
         baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label));
-        ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
+        ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
+
     }
 }
 
@@ -116,11 +117,15 @@ contract ENSDeployer is Ownable {
     UniversalResolver public universalResolver;
 
     function deployResolver(string memory tld) public onlyOwner{
+        bytes32 tld_label = keccak256(bytes(tld));
+        bytes32 tld_node = ENSUtils.namehash(tld_label);
         publicResolver = ENSPublicResolverDeployer.deployResolver(ens, nameWrapper, registrarController, reverseRegistrar);
         reverseRegistrar.setDefaultResolver(address(publicResolver));
-        // get from scripts/computeInterfaceId.ts
-        publicResolver.setInterface(ENSUtils.namehash(keccak256(bytes(tld))), 0x1c23091d, address(nameWrapper));
 
+        // get from scripts/computeInterfaceId.ts
+        publicResolver.setInterface(tld_node, 0x1c23091d, address(nameWrapper));
+        // get from scripts/computeInterfaceId.ts
+        publicResolver.setInterface(tld_node, 0xdf7ed181, address(nameWrapper));
     }
 
     function deployUtils() public onlyOwner{
@@ -138,16 +143,18 @@ contract ENSDeployer is Ownable {
         registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
         nameWrapper.setController(address(registrarController), true);
         reverseRegistrar.setController(address(registrarController), true);
-        publicResolver.setInterface(ENSUtils.namehash(keccak256(bytes(tld))), 0xdf7ed181, address(nameWrapper));
-
     }
-
+    function setOwnership(string memory tld) public onlyOwner {
+        bytes32 tld_label = keccak256(bytes(tld));
+        ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
+    }
     constructor(string memory tld, IPriceOracle priceOracle) {
         deployRegistrar(tld);
         deployNFTServices();
         deployController(tld, priceOracle);
         deployResolver(tld);
         deployUtils();
+        setOwnership(tld);
     }
 
     function transferOwner(address dest) external onlyOwner {
