@@ -52,6 +52,7 @@ library ENSRegistryDeployer{
         );
 
         baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label));
+        ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
     }
 }
 
@@ -68,7 +69,7 @@ library ENSControllerDeployer{
             baseRegistrar,
             priceOracle,
             10,
-            60 * 30,
+            60 * 60 * 24,
             reverseRegistrar,
             nameWrapper,
             ENSUtils.namehash(keccak256(bytes(tld))),
@@ -86,6 +87,11 @@ library ENSPublicResolverDeployer{
             address(reverseRegistrar)
         );
         bytes32 resolverNode = ENSUtils.namehash(ENSUtils.RESOLVER_LABEL);
+
+//        note that in newer ens-contract deployment script, resolver address is set to `resolver.<tld>`, instead of just `resolver`. I am not sure if that has any significance, if it does we should update the lines below to be consistent with that
+//        bytes32 tldNode = ENSUtils.namehash(keccak256(abi.encodePacked(tld)));
+//        bytes32 resolverNode = ENSUtils.namehash(tldNode, ENSUtils.RESOLVER_LABEL);
+//        ens.setSubnodeOwner(bytes32(0), tldNode, address(this));
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, address(this));
         ens.setResolver(resolverNode, address(publicResolver));
         publicResolver.setAddr(resolverNode, address(publicResolver));
@@ -109,8 +115,12 @@ contract ENSDeployer is Ownable {
 
     UniversalResolver public universalResolver;
 
-    function deployResolver() public onlyOwner{
+    function deployResolver(string memory tld) public onlyOwner{
         publicResolver = ENSPublicResolverDeployer.deployResolver(ens, nameWrapper, registrarController, reverseRegistrar);
+        reverseRegistrar.setDefaultResolver(address(publicResolver));
+        // get from scripts/computeInterfaceId.ts
+        publicResolver.setInterface(ENSUtils.namehash(keccak256(bytes(tld))), 0x1c23091d, address(nameWrapper));
+
     }
 
     function deployUtils() public onlyOwner{
@@ -122,24 +132,28 @@ contract ENSDeployer is Ownable {
     }
     function deployNFTServices() public onlyOwner {
         (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar);
+        baseRegistrar.addController(address(nameWrapper));
     }
     function deployController(string memory tld, IPriceOracle priceOracle) public onlyOwner{
         registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
         nameWrapper.setController(address(registrarController), true);
         reverseRegistrar.setController(address(registrarController), true);
+        publicResolver.setInterface(ENSUtils.namehash(keccak256(bytes(tld))), 0xdf7ed181, address(nameWrapper));
+
     }
 
     constructor(string memory tld, IPriceOracle priceOracle) {
         deployRegistrar(tld);
         deployNFTServices();
         deployController(tld, priceOracle);
-        deployResolver();
+        deployResolver(tld);
         deployUtils();
     }
 
     function transferOwner(address dest) external onlyOwner {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, dest);
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, dest);
+//        ens.setSubnodeOwner(bytes32(0), ENSUtils.namehash(keccak256(abi.encodePacked(tld))), dest);
         ens.setOwner(bytes32(0), dest);
         nameWrapper.transferOwnership(dest);
         baseRegistrar.transferOwnership(dest);
