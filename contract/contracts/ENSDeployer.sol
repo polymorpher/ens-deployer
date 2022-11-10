@@ -144,5 +144,6 @@ contract ENSDeployer is Ownable {
         nameWrapper.transferOwnership(dest);
         baseRegistrar.transferOwnership(dest);
         universalResolver.transferOwnership(dest);
+        reverseRegistrar.transferOwnership(dest);
     }
 }
