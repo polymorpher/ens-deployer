@@ -67,8 +67,8 @@ library ENSControllerDeployer{
         registrarController = new RegistrarController(
             baseRegistrar,
             priceOracle,
-            3600 * 24 * 365,
-            3600 * 24 * 365 * 10,
+            10,
+            60 * 30,
             reverseRegistrar,
             nameWrapper,
             ENSUtils.namehash(keccak256(bytes(tld))),
@@ -125,6 +125,8 @@ contract ENSDeployer is Ownable {
     }
     function deployController(string memory tld, IPriceOracle priceOracle) public onlyOwner{
         registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
+        nameWrapper.setController(registrarController);
+        reverseRegistrar.setController(registrarController);
     }
 
     constructor(string memory tld, IPriceOracle priceOracle) {
@@ -139,5 +141,8 @@ contract ENSDeployer is Ownable {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, dest);
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, dest);
         ens.setOwner(bytes32(0), dest);
+        nameWrapper.transferOwnership(dest);
+        baseRegistrar.transferOwnership(dest);
+        universalResolver.transferOwnership(dest);
     }
 }
