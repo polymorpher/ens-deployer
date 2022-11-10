@@ -56,14 +56,14 @@ library ENSRegistryDeployer{
 }
 
 library ENSNFTDeployer{
-    function deployNFTServices(ENS ens, BaseRegistrarImplementation baseRegistrar) public returns (IMetadataService metadataService, INameWrapper nameWrapper){
+    function deployNFTServices(ENS ens, BaseRegistrarImplementation baseRegistrar) public returns (IMetadataService metadataService, NameWrapper nameWrapper){
         metadataService = IMetadataService(address(new StaticMetadataService("https://modulo.so/ens/metadata")));
         nameWrapper = new NameWrapper(ens, baseRegistrar, metadataService);
     }
 }
 
 library ENSControllerDeployer{
-    function deployController(string memory tld, IPriceOracle priceOracle, INameWrapper nameWrapper, BaseRegistrarImplementation baseRegistrar, ReverseRegistrar reverseRegistrar) public returns (RegistrarController registrarController) {
+    function deployController(string memory tld, IPriceOracle priceOracle, NameWrapper nameWrapper, BaseRegistrarImplementation baseRegistrar, ReverseRegistrar reverseRegistrar) public returns (RegistrarController registrarController) {
         registrarController = new RegistrarController(
             baseRegistrar,
             priceOracle,
@@ -78,7 +78,7 @@ library ENSControllerDeployer{
 }
 
 library ENSPublicResolverDeployer{
-    function deployResolver(ENS ens, INameWrapper nameWrapper, RegistrarController registrarController, ReverseRegistrar reverseRegistrar) public returns(PublicResolver publicResolver){
+    function deployResolver(ENS ens, NameWrapper nameWrapper, RegistrarController registrarController, ReverseRegistrar reverseRegistrar) public returns(PublicResolver publicResolver){
         publicResolver = new PublicResolver(
             ens,
             INameWrapperForPublicResolver(address(nameWrapper)),
@@ -101,7 +101,7 @@ contract ENSDeployer is Ownable {
     BaseRegistrarImplementation public baseRegistrar;
     // nft
     IMetadataService public metadataService; // this needs to be replaced with something real
-    INameWrapper public nameWrapper;
+    NameWrapper public nameWrapper;
 
     RegistrarController public registrarController;
 
@@ -125,8 +125,8 @@ contract ENSDeployer is Ownable {
     }
     function deployController(string memory tld, IPriceOracle priceOracle) public onlyOwner{
         registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
-        nameWrapper.setController(registrarController);
-        reverseRegistrar.setController(registrarController);
+        nameWrapper.setController(address(registrarController), true);
+        reverseRegistrar.setController(address(registrarController), true);
     }
 
     constructor(string memory tld, IPriceOracle priceOracle) {
