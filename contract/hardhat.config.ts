@@ -54,7 +54,16 @@ const hardhatUserconfig: HardhatUserConfig = {
       accounts: { mnemonic: process.env.MNEMONIC },
       chainId: 1666600000,
       live: true,
-      gasPrice: 150e+9,
+      gasPrice: 100e+9,
+      gasMultiplier: 2,
+      gas: 10e+6
+    },
+    s1: {
+      url: process.env.S1_URL,
+      accounts: { mnemonic: process.env.MNEMONIC },
+      chainId: 1666600001,
+      live: true,
+      gasPrice: 100e+9,
       gasMultiplier: 2,
       gas: 10e+6
     }
