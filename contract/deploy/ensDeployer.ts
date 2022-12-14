@@ -5,7 +5,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
   const TLD = process.env.TLD || 'country'
-  const OracleDeployer = await deploy("OracleDeployer", {from: deployer, args: [1, [1000, 2000, 3000, 4000, 5000]]})
+  const OracleDeployer = await deploy("OracleDeployer", {from: deployer, args: [1, [250, 100, 50, 20, 10]]})
   const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracle = await oracleDeployer.oracle()
   console.log('oracleDeployer:', oracleDeployer.address)
