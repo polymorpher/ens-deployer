@@ -68,7 +68,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     PublicResolver: await ensDeployer.publicResolver(),
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address,
-  }) + '\'')
+  } , null, 2) + '\'')
 }
 f.tags = ['ENSDeployer']
 export default f
