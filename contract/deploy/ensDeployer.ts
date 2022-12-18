@@ -62,7 +62,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
     FIFSRegistrar:  await ensDeployer.fifsRegistrar(),
     ReverseRegistrar: await ensDeployer.reverseRegistrar(),
-    BaseRegistrar: await ensDeployer.baseRegistrar(),
     MetadataService: await ensDeployer.metadataService(),
     NameWrapper: await ensDeployer.nameWrapper(),
     ETHRegistrarController: await ensDeployer.registrarController(),
