@@ -1,37 +1,45 @@
 pragma solidity >=0.8.4;
 
-import '@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol';
-import '@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol';
-import '@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol';
-import '@ensdomains/ens-contracts/contracts/wrapper/NameWrapper.sol';
-import '@ensdomains/ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol';
-import '@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol';
-import {INameWrapper as INameWrapperForPublicResolver, PublicResolver} from '@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol';
-import '@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol';
-import {NameResolver, ReverseRegistrar} from '@ensdomains/ens-contracts/contracts/registry/ReverseRegistrar.sol';
+import "@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol";
+import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
+import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
+import "@ensdomains/ens-contracts/contracts/wrapper/NameWrapper.sol";
+import "@ensdomains/ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
+import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
+import {INameWrapper as INameWrapperForPublicResolver, PublicResolver} from "@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol";
+import "@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol";
+import {NameResolver, ReverseRegistrar} from "@ensdomains/ens-contracts/contracts/registry/ReverseRegistrar.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RegistrarController.sol";
 
-library ENSUtils{
-    bytes32 public constant RESOLVER_LABEL = keccak256('resolver');
-    bytes32 public constant REVERSE_REGISTRAR_LABEL = keccak256('reverse');
-    bytes32 public constant ADDR_LABEL = keccak256('addr');
+library ENSUtils {
+    bytes32 public constant RESOLVER_LABEL = keccak256("resolver");
+    bytes32 public constant REVERSE_REGISTRAR_LABEL = keccak256("reverse");
+    bytes32 public constant ADDR_LABEL = keccak256("addr");
 
-    function namehash(bytes32 node, bytes32 label) public pure returns (bytes32) {
+    function namehash(bytes32 node, bytes32 label)
+        public
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(node, label));
     }
-    function namehash(bytes32 label) public pure returns (bytes32){
+
+    function namehash(bytes32 label) public pure returns (bytes32) {
         return namehash(bytes32(0), label);
     }
 }
 
-library ENSRegistryDeployer{
-    function deployRegistry(string memory tld) public returns (
-        ENSRegistry ens,
-        FIFSRegistrar fifsRegistrar,
-        ReverseRegistrar reverseRegistrar,
-        BaseRegistrarImplementation baseRegistrar
-    ){
+library ENSRegistryDeployer {
+    function deployRegistry(string memory tld)
+        public
+        returns (
+            ENSRegistry ens,
+            FIFSRegistrar fifsRegistrar,
+            ReverseRegistrar reverseRegistrar,
+            BaseRegistrarImplementation baseRegistrar
+        )
+    {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
 
@@ -44,28 +52,48 @@ library ENSRegistryDeployer{
         reverseRegistrar = new ReverseRegistrar(ens);
 
         // Set up the reverse registrar
-        ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
+        ens.setSubnodeOwner(
+            bytes32(0),
+            ENSUtils.REVERSE_REGISTRAR_LABEL,
+            address(this)
+        );
         ens.setSubnodeOwner(
             ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL),
             ENSUtils.ADDR_LABEL,
             address(reverseRegistrar)
         );
 
-        baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label));
+        baseRegistrar = new BaseRegistrarImplementation(
+            ens,
+            ENSUtils.namehash(tld_label)
+        );
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
-
     }
 }
 
-library ENSNFTDeployer{
-    function deployNFTServices(ENS ens, BaseRegistrarImplementation baseRegistrar) public returns (IMetadataService metadataService, NameWrapper nameWrapper){
-        metadataService = IMetadataService(address(new StaticMetadataService("https://modulo.so/ens/metadata")));
+library ENSNFTDeployer {
+    function deployNFTServices(
+        ENS ens,
+        BaseRegistrarImplementation baseRegistrar
+    )
+        public
+        returns (IMetadataService metadataService, NameWrapper nameWrapper)
+    {
+        metadataService = IMetadataService(
+            address(new StaticMetadataService("https://modulo.so/ens/metadata"))
+        );
         nameWrapper = new NameWrapper(ens, baseRegistrar, metadataService);
     }
 }
 
-library ENSControllerDeployer{
-    function deployController(string memory tld, IPriceOracle priceOracle, NameWrapper nameWrapper, BaseRegistrarImplementation baseRegistrar, ReverseRegistrar reverseRegistrar) public returns (RegistrarController registrarController) {
+library ENSControllerDeployer {
+    function deployController(
+        string memory tld,
+        IPriceOracle priceOracle,
+        NameWrapper nameWrapper,
+        BaseRegistrarImplementation baseRegistrar,
+        ReverseRegistrar reverseRegistrar
+    ) public returns (RegistrarController registrarController) {
         registrarController = new RegistrarController(
             baseRegistrar,
             priceOracle,
@@ -79,8 +107,13 @@ library ENSControllerDeployer{
     }
 }
 
-library ENSPublicResolverDeployer{
-    function deployResolver(ENS ens, NameWrapper nameWrapper, RegistrarController registrarController, ReverseRegistrar reverseRegistrar) public returns(PublicResolver publicResolver){
+library ENSPublicResolverDeployer {
+    function deployResolver(
+        ENS ens,
+        NameWrapper nameWrapper,
+        RegistrarController registrarController,
+        ReverseRegistrar reverseRegistrar
+    ) public returns (PublicResolver publicResolver) {
         publicResolver = new PublicResolver(
             ens,
             INameWrapperForPublicResolver(address(nameWrapper)),
@@ -89,10 +122,10 @@ library ENSPublicResolverDeployer{
         );
         bytes32 resolverNode = ENSUtils.namehash(ENSUtils.RESOLVER_LABEL);
 
-//        note that in newer ens-contract deployment script, resolver address is set to `resolver.<tld>`, instead of just `resolver`. I am not sure if that has any significance, if it does we should update the lines below to be consistent with that
-//        bytes32 tldNode = ENSUtils.namehash(keccak256(abi.encodePacked(tld)));
-//        bytes32 resolverNode = ENSUtils.namehash(tldNode, ENSUtils.RESOLVER_LABEL);
-//        ens.setSubnodeOwner(bytes32(0), tldNode, address(this));
+        //        note that in newer ens-contract deployment script, resolver address is set to `resolver.<tld>`, instead of just `resolver`. I am not sure if that has any significance, if it does we should update the lines below to be consistent with that
+        //        bytes32 tldNode = ENSUtils.namehash(keccak256(abi.encodePacked(tld)));
+        //        bytes32 resolverNode = ENSUtils.namehash(tldNode, ENSUtils.RESOLVER_LABEL);
+        //        ens.setSubnodeOwner(bytes32(0), tldNode, address(this));
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, address(this));
         ens.setResolver(resolverNode, address(publicResolver));
         publicResolver.setAddr(resolverNode, address(publicResolver));
@@ -116,10 +149,15 @@ contract ENSDeployer is Ownable {
 
     UniversalResolver public universalResolver;
 
-    function deployResolver(string memory tld) public onlyOwner{
+    function deployResolver(string memory tld) public onlyOwner {
         bytes32 tld_label = keccak256(bytes(tld));
         bytes32 tld_node = ENSUtils.namehash(tld_label);
-        publicResolver = ENSPublicResolverDeployer.deployResolver(ens, nameWrapper, registrarController, reverseRegistrar);
+        publicResolver = ENSPublicResolverDeployer.deployResolver(
+            ens,
+            nameWrapper,
+            registrarController,
+            reverseRegistrar
+        );
         reverseRegistrar.setDefaultResolver(address(publicResolver));
 
         // get from scripts/computeInterfaceId.ts
@@ -128,26 +166,51 @@ contract ENSDeployer is Ownable {
         publicResolver.setInterface(tld_node, 0xdf7ed181, address(nameWrapper));
     }
 
-    function deployUtils() public onlyOwner{
-        universalResolver = new UniversalResolver(address(ens), new string[](0));
+    function deployUtils() public onlyOwner {
+        universalResolver = new UniversalResolver(
+            address(ens),
+            new string[](0)
+        );
     }
 
     function deployRegistrar(string memory tld) public onlyOwner {
-        (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistry(tld);
+        (
+            ens,
+            fifsRegistrar,
+            reverseRegistrar,
+            baseRegistrar
+        ) = ENSRegistryDeployer.deployRegistry(tld);
     }
+
     function deployNFTServices() public onlyOwner {
-        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar);
+        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(
+            ens,
+            baseRegistrar
+        );
         baseRegistrar.addController(address(nameWrapper));
     }
-    function deployController(string memory tld, IPriceOracle priceOracle) public onlyOwner{
-        registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
+
+    function deployController(string memory tld, IPriceOracle priceOracle)
+        public
+        onlyOwner
+    {
+        registrarController = ENSControllerDeployer.deployController(
+            tld,
+            priceOracle,
+            nameWrapper,
+            baseRegistrar,
+            reverseRegistrar
+        );
         nameWrapper.setController(address(registrarController), true);
         reverseRegistrar.setController(address(registrarController), true);
     }
+
     function setOwnership(string memory tld) public onlyOwner {
         bytes32 tld_label = keccak256(bytes(tld));
         ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
+        baseRegistrar.addController(address(registrarController));
     }
+
     constructor(string memory tld, IPriceOracle priceOracle) {
         deployRegistrar(tld);
         deployNFTServices();
@@ -160,7 +223,7 @@ contract ENSDeployer is Ownable {
     function transferOwner(address dest) external onlyOwner {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, dest);
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, dest);
-//        ens.setSubnodeOwner(bytes32(0), ENSUtils.namehash(keccak256(abi.encodePacked(tld))), dest);
+        //        ens.setSubnodeOwner(bytes32(0), ENSUtils.namehash(keccak256(abi.encodePacked(tld))), dest);
         ens.setOwner(bytes32(0), dest);
         nameWrapper.transferOwnership(dest);
         baseRegistrar.transferOwnership(dest);
