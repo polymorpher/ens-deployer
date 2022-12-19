@@ -208,7 +208,6 @@ contract ENSDeployer is Ownable {
     function setOwnership(string memory tld) public onlyOwner {
         bytes32 tld_label = keccak256(bytes(tld));
         ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
-        baseRegistrar.addController(address(registrarController));
     }
 
     constructor(string memory tld, IPriceOracle priceOracle) {
