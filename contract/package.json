@@ -6,7 +6,9 @@
         "node": ">=16"
     },
     "scripts": {
-        "deploy": "npx hardhat deploy"
+        "compile": "npx hardhat compile",
+        "deploy": "npx hardhat deploy",
+        "test": "npx hardhat test"
     },
     "devDependencies": {
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",

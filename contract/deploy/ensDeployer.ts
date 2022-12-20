@@ -4,6 +4,7 @@ import { ethers } from 'hardhat'
 const f = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
+  const TLD = process.env.TLD || 'country'
   const OracleDeployer = await deploy("OracleDeployer", {from: deployer, args: [1, [250, 100, 50, 20, 10]]})
   const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracle = await oracleDeployer.oracle()
@@ -17,7 +18,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const ENSPublicResolverDeployer = await deploy("ENSPublicResolverDeployer", {from: deployer, libraries: {ENSUtils: ENSUtils.address}})
   const ENSDeployer = await deploy('ENSDeployer', {
     from: deployer,
-    args: ['eth', priceOracle],
+    args: [TLD, priceOracle],
     log: true,
     autoMine: true,
     libraries:{
@@ -61,14 +62,13 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
     FIFSRegistrar:  await ensDeployer.fifsRegistrar(),
     ReverseRegistrar: await ensDeployer.reverseRegistrar(),
-    BaseRegistrar: await ensDeployer.baseRegistrar(),
     MetadataService: await ensDeployer.metadataService(),
     NameWrapper: await ensDeployer.nameWrapper(),
     ETHRegistrarController: await ensDeployer.registrarController(),
     PublicResolver: await ensDeployer.publicResolver(),
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address,
-  }) + '\'')
+  } , null, 2) + '\'')
 }
 f.tags = ['ENSDeployer']
 export default f
