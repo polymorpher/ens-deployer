@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
 
 const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
+console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
 const f = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
