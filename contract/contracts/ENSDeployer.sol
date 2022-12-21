@@ -68,8 +68,8 @@ library ENSControllerDeployer {
         registrarController = new RegistrarController(
             baseRegistrar,
             priceOracle,
-            10,
-            60 * 60 * 24,
+            1,
+            60 * 2,
             reverseRegistrar,
             nameWrapper,
             ENSUtils.namehash(keccak256(bytes(tld))),
