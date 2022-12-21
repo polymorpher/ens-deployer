@@ -33,7 +33,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     uint256 public constant MIN_REGISTRATION_DURATION = 28 days;
     bytes32 public baseNode;
-    string baseExtension;
+    string public baseExtension;
 
     uint64 private constant MAX_EXPIRY = type(uint64).max;
     BaseRegistrarImplementation immutable base;

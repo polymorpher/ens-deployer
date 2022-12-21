@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 import "@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol";
 import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
 import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
-import "@ensdomains/ens-contracts/contracts/wrapper/NameWrapper.sol";
+import "./TLDNameWrapper.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 import {INameWrapper as INameWrapperForPublicResolver, PublicResolver} from "@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol";
@@ -51,9 +51,13 @@ library ENSRegistryDeployer {
 }
 
 library ENSNFTDeployer {
-    function deployNFTServices(ENS ens, BaseRegistrarImplementation baseRegistrar) public returns (IMetadataService metadataService, NameWrapper nameWrapper) {
+    function deployNFTServices(
+        ENS ens,
+        BaseRegistrarImplementation baseRegistrar,
+        string memory tld
+    ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
         metadataService = IMetadataService(address(new StaticMetadataService("https://modulo.so/ens/metadata")));
-        nameWrapper = new NameWrapper(ens, baseRegistrar, metadataService);
+        nameWrapper = new TLDNameWrapper(ens, baseRegistrar, metadataService, tld);
     }
 }
 
@@ -61,7 +65,7 @@ library ENSControllerDeployer {
     function deployController(
         string memory tld,
         IPriceOracle priceOracle,
-        NameWrapper nameWrapper,
+        TLDNameWrapper nameWrapper,
         BaseRegistrarImplementation baseRegistrar,
         ReverseRegistrar reverseRegistrar
     ) public returns (RegistrarController registrarController) {
@@ -81,7 +85,7 @@ library ENSControllerDeployer {
 library ENSPublicResolverDeployer {
     function deployResolver(
         ENS ens,
-        NameWrapper nameWrapper,
+        TLDNameWrapper nameWrapper,
         RegistrarController registrarController,
         ReverseRegistrar reverseRegistrar
     ) public returns (PublicResolver publicResolver) {
@@ -107,7 +111,7 @@ contract ENSDeployer is Ownable {
     BaseRegistrarImplementation public baseRegistrar;
     // nft
     IMetadataService public metadataService; // this needs to be replaced with something real
-    NameWrapper public nameWrapper;
+    TLDNameWrapper public nameWrapper;
 
     RegistrarController public registrarController;
 
@@ -135,8 +139,8 @@ contract ENSDeployer is Ownable {
         (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistry(tld);
     }
 
-    function deployNFTServices() public onlyOwner {
-        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar);
+    function deployNFTServices(string memory tld) public onlyOwner {
+        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar, tld);
         baseRegistrar.addController(address(nameWrapper));
     }
 
@@ -153,7 +157,7 @@ contract ENSDeployer is Ownable {
 
     constructor(string memory tld, IPriceOracle priceOracle) {
         deployRegistrar(tld);
-        deployNFTServices();
+        deployNFTServices(tld);
         deployController(tld, priceOracle);
         deployResolver(tld);
         deployUtils();
