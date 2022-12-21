@@ -36,7 +36,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     string baseExtension;
 
     uint64 private constant MAX_EXPIRY = type(uint64).max;
-    BaseRegistrarImplementation immutable base;
+    BaseRegistrarImplementation public immutable base;
     IPriceOracle public immutable prices;
     uint256 public immutable minCommitmentAge;
     uint256 public immutable maxCommitmentAge;
