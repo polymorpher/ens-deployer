@@ -33,7 +33,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     uint256 public constant MIN_REGISTRATION_DURATION = 28 days;
     bytes32 public baseNode;
-    string baseExtension;
+    string public baseExtension;
 
     uint64 private constant MAX_EXPIRY = type(uint64).max;
     BaseRegistrarImplementation immutable base;
@@ -45,20 +45,8 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     mapping(bytes32 => uint256) public commitments;
 
-    event NameRegistered(
-        string name,
-        bytes32 indexed label,
-        address indexed owner,
-        uint256 baseCost,
-        uint256 premium,
-        uint256 expires
-    );
-    event NameRenewed(
-        string name,
-        bytes32 indexed label,
-        uint256 cost,
-        uint256 expires
-    );
+    event NameRegistered(string name, bytes32 indexed label, address indexed owner, uint256 baseCost, uint256 premium, uint256 expires);
+    event NameRenewed(string name, bytes32 indexed label, uint256 cost, uint256 expires);
 
     constructor(
         BaseRegistrarImplementation _base,
@@ -88,7 +76,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         baseExtension = _baseExtension;
     }
 
-    function rentPrice(string memory name, uint256 duration) public view override returns (IPriceOracle.Price memory price){
+    function rentPrice(string memory name, uint256 duration) public view override returns (IPriceOracle.Price memory price) {
         bytes32 label = keccak256(bytes(name));
         price = prices.price(name, base.nameExpires(uint256(label)), duration);
     }
@@ -117,20 +105,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         if (data.length > 0 && resolver == address(0)) {
             revert ResolverRequiredWhenDataSupplied();
         }
-        return
-        keccak256(
-            abi.encode(
-                label,
-                owner,
-                duration,
-                resolver,
-                data,
-                secret,
-                reverseRecord,
-                fuses,
-                wrapperExpiry
-            )
-        );
+        return keccak256(abi.encode(label, owner, duration, resolver, data, secret, reverseRecord, fuses, wrapperExpiry));
     }
 
     function commit(bytes32 commitment) public override {
@@ -156,30 +131,9 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
             revert InsufficientValue();
         }
 
-        _consumeCommitment(
-            name,
-            duration,
-            makeCommitment(
-                name,
-                owner,
-                duration,
-                secret,
-                resolver,
-                data,
-                reverseRecord,
-                fuses,
-                wrapperExpiry
-            )
-        );
+        _consumeCommitment(name, duration, makeCommitment(name, owner, duration, secret, resolver, data, reverseRecord, fuses, wrapperExpiry));
 
-        uint256 expires = nameWrapper.registerAndWrapETH2LD(
-            name,
-            owner,
-            duration,
-            resolver,
-            fuses,
-            wrapperExpiry
-        );
+        uint256 expires = nameWrapper.registerAndWrapETH2LD(name, owner, duration, resolver, fuses, wrapperExpiry);
 
         if (data.length > 0) {
             _setRecords(resolver, keccak256(bytes(name)), data);
@@ -189,36 +143,18 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
             _setReverseRecord(name, resolver, msg.sender);
         }
 
-        emit NameRegistered(
-            name,
-            keccak256(bytes(name)),
-            owner,
-            price.base,
-            price.premium,
-            expires
-        );
+        emit NameRegistered(name, keccak256(bytes(name)), owner, price.base, price.premium, expires);
 
         if (msg.value > (price.base + price.premium)) {
-            payable(msg.sender).transfer(
-                msg.value - (price.base + price.premium)
-            );
+            payable(msg.sender).transfer(msg.value - (price.base + price.premium));
         }
     }
 
-    function renew(string calldata name, uint256 duration)
-    external
-    payable
-    override
-    {
+    function renew(string calldata name, uint256 duration) external payable override {
         _renew(name, duration, 0, 0);
     }
 
-    function renewWithFuses(
-        string calldata name,
-        uint256 duration,
-        uint32 fuses,
-        uint64 wrapperExpiry
-    ) external payable {
+    function renewWithFuses(string calldata name, uint256 duration, uint32 fuses, uint64 wrapperExpiry) external payable {
         bytes32 labelhash = keccak256(bytes(name));
         bytes32 nodehash = keccak256(abi.encodePacked(baseNode, labelhash));
         if (!nameWrapper.isTokenOwnerOrApproved(nodehash, msg.sender)) {
@@ -227,12 +163,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         _renew(name, duration, fuses, wrapperExpiry);
     }
 
-    function _renew(
-        string calldata name,
-        uint256 duration,
-        uint32 fuses,
-        uint64 wrapperExpiry
-    ) internal {
+    function _renew(string calldata name, uint256 duration, uint32 fuses, uint64 wrapperExpiry) internal {
         bytes32 labelhash = keccak256(bytes(name));
         uint256 tokenId = uint256(labelhash);
         IPriceOracle.Price memory price = rentPrice(name, duration);
@@ -253,22 +184,13 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         payable(owner()).transfer(address(this).balance);
     }
 
-    function supportsInterface(bytes4 interfaceID)
-    external
-    pure
-    returns (bool) {
-        return
-        interfaceID == type(IERC165).interfaceId ||
-        interfaceID == type(IETHRegistrarController).interfaceId;
+    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
+        return interfaceID == type(IERC165).interfaceId || interfaceID == type(IETHRegistrarController).interfaceId;
     }
 
     /* Internal functions */
 
-    function _consumeCommitment(
-        string memory name,
-        uint256 duration,
-        bytes32 commitment
-    ) internal {
+    function _consumeCommitment(string memory name, uint256 duration, bytes32 commitment) internal {
         // Require an old enough commitment.
         if (commitments[commitment] + minCommitmentAge > block.timestamp) {
             revert CommitmentTooNew(commitment);
@@ -289,27 +211,14 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         }
     }
 
-    function _setRecords(
-        address resolverAddress,
-        bytes32 label,
-        bytes[] calldata data
-    ) internal {
+    function _setRecords(address resolverAddress, bytes32 label, bytes[] calldata data) internal {
         // use hardcoded .eth namehash
         bytes32 nodehash = keccak256(abi.encodePacked(baseNode, label));
         Resolver resolver = Resolver(resolverAddress);
         resolver.multicallWithNodeCheck(nodehash, data);
     }
 
-    function _setReverseRecord(
-        string memory name,
-        address resolver,
-        address owner
-    ) internal {
-        reverseRegistrar.setNameForAddr(
-            msg.sender,
-            owner,
-            resolver,
-            string.concat(name, ".", baseExtension)
-        );
+    function _setReverseRecord(string memory name, address resolver, address owner) internal {
+        reverseRegistrar.setNameForAddr(msg.sender, owner, resolver, string.concat(name, ".", baseExtension));
     }
 }
