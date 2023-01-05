@@ -1,18 +1,27 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ethers } from 'hardhat'
+// import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import hre, { ethers } from 'hardhat'
 
-const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
-console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
-const f = async function (hre: HardhatRuntimeEnvironment) {
+export async function deploy (context) {
+  // Deploy Price Oracles
+  const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
+  console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
+  console.log('deployer account', deployer)
   const TLD = process.env.TLD || 'country'
+  //   console.log('deploying OracleDeployer')
   const OracleDeployer = await deploy('OracleDeployer', { from: deployer, args: [1, [ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE]] })
-  const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
-  const priceOracle = await oracleDeployer.oracle()
-  console.log('oracleDeployer:', oracleDeployer.address)
-  console.log('- priceOracle:', priceOracle)
-  console.log('- usdOracle:', await oracleDeployer.usdOracle())
+  //   console.log('OracleDeployerDeployed')
+  context.oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
+  const priceOracleAddress = await context.oracleDeployer.oracle()
+  context.priceOracle = await ethers.getContractAt('MockStablePriceOracle', priceOracleAddress)
+  const usdOracleAddress = await context.oracleDeployer.usdOracle()
+  context.usdOracle = await ethers.getContractAt('MockStablePriceOracle', usdOracleAddress)
+  console.log('- oracleDeployer:', context.oracleDeployer.address)
+  console.log('- priceOracle:', context.priceOracle.address)
+  console.log('- usdOracle:', await context.usdOracle.address)
+
+  // Deploy ENS Deployers
   const ENSUtils = await deploy('ENSUtils', { from: deployer })
   const ENSRegistryDeployer = await deploy('ENSRegistryDeployer', { from: deployer, libraries: { ENSUtils: ENSUtils.address } })
   const ENSNFTDeployer = await deploy('ENSNFTDeployer', { from: deployer, libraries: { ENSUtils: ENSUtils.address } })
@@ -20,7 +29,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const ENSPublicResolverDeployer = await deploy('ENSPublicResolverDeployer', { from: deployer, libraries: { ENSUtils: ENSUtils.address } })
   const ENSDeployer = await deploy('ENSDeployer', {
     from: deployer,
-    args: [TLD, priceOracle],
+    args: [TLD, context.priceOracle.address],
     log: true,
     autoMine: true,
     libraries: {
@@ -31,26 +40,35 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
       ENSPublicResolverDeployer: ENSPublicResolverDeployer.address
     }
   })
-  const ensDeployer = await ethers.getContractAt('ENSDeployer', ENSDeployer.address)
-  console.log('deployer account', deployer)
-  console.log('ENSDeployer deployed to:', ensDeployer.address)
-  console.log('- ens deployed to:', await ensDeployer.ens())
-  console.log('- fifsRegistrar deployed to:', await ensDeployer.fifsRegistrar())
-  console.log('- reverseRegistrar deployed to:', await ensDeployer.reverseRegistrar())
-  console.log('- baseRegistrar deployed to:', await ensDeployer.baseRegistrar())
+  context.ensDeployer = await ethers.getContractAt('ENSDeployer', ENSDeployer.address)
+  console.log('- ENSDeployer deployed to:', context.ensDeployer.address)
+  console.log('- ens deployed to:', await context.ensDeployer.ens())
+  context.ens = await ethers.getContractAt('MockENSRegistry', await context.ensDeployer.ens())
 
-  console.log('- metadataService deployed to:', await ensDeployer.metadataService())
-  console.log('- nameWrapper deployed to:', await ensDeployer.nameWrapper())
+  console.log('- fifsRegistrar deployed to:', await context.ensDeployer.fifsRegistrar())
+  context.fifsRegistrar = await ethers.getContractAt('MockFIFSRegistrar', await context.ensDeployer.fifsRegistrar())
+  console.log('- reverseRegistrar deployed to:', await context.ensDeployer.reverseRegistrar())
+  context.reverseRegistrar = await ethers.getContractAt('MockReverseRegistrar', await context.ensDeployer.reverseRegistrar())
+  console.log('- baseRegistrar deployed to:', await context.ensDeployer.baseRegistrar())
+  context.baseRegistrar = await ethers.getContractAt('MockBaseRegistrar', await context.ensDeployer.baseRegistrar())
 
-  console.log('- registrarController deployed to:', await ensDeployer.registrarController())
+  console.log('- metadataService deployed to:', await context.ensDeployer.metadataService())
+  context.metadataService = await ethers.getContractAt('MockStaticMetadataService', await context.ensDeployer.metadataService())
+  console.log('- nameWrapper deployed to:', await context.ensDeployer.nameWrapper())
+  context.nameWrapper = await ethers.getContractAt('TLDNameWrapper', await context.ensDeployer.nameWrapper())
 
-  console.log('- publicResolver deployed to:', await ensDeployer.publicResolver())
+  console.log('- registrarController deployed to:', await context.ensDeployer.registrarController())
+  context.registrarController = await ethers.getContractAt('RegistrarController', await context.ensDeployer.registrarController())
 
-  console.log('- universalResolver deployed to:', await ensDeployer.universalResolver())
+  console.log('- publicResolver deployed to:', await context.ensDeployer.publicResolver())
+  context.publicResolver = await ethers.getContractAt('MockPublicResolver', await context.ensDeployer.publicResolver())
 
-  const receipt = await ensDeployer.transferOwner(deployer).then(tx => tx.wait())
-  console.log('tx', receipt.transactionHash)
-  const ens = await ethers.getContractAt('ENSRegistry', await ensDeployer.ens())
+  console.log('- universalResolver deployed to:', await context.ensDeployer.universalResolver())
+  context.universalResolver = await ethers.getContractAt('MockPublicResolver', await context.ensDeployer.universalResolver())
+
+  const receipt = await context.ensDeployer.transferOwner(deployer).then(tx => tx.wait())
+  console.log('ensDeployer.transferOwner tx', receipt.transactionHash)
+  const ens = await ethers.getContractAt('ENSRegistry', await context.ensDeployer.ens())
   console.log('ens owner:', await ens.owner(new Uint8Array(32)))
   const resolverNode = ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('resolver'))]))
   const reverseRegNode = ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('reverse'))]))
@@ -58,19 +76,18 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log('reverse registrar node owner:', await ens.owner(reverseRegNode))
 
   const Multicall = await deploy('Multicall3', { from: deployer })
+  context.multicall = await ethers.getContractAt('Multicall3', Multicall.address)
 
   console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\'' + JSON.stringify({
-    ENSRegistry: await ens.address,
-    BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
-    FIFSRegistrar: await ensDeployer.fifsRegistrar(),
-    ReverseRegistrar: await ensDeployer.reverseRegistrar(),
-    MetadataService: await ensDeployer.metadataService(),
-    NameWrapper: await ensDeployer.nameWrapper(),
-    ETHRegistrarController: await ensDeployer.registrarController(),
-    PublicResolver: await ensDeployer.publicResolver(),
-    UniversalResolver: await ensDeployer.universalResolver(),
-    Multicall: await Multicall.address
-  }) + '\'')
+    ENSRegistry: context.ens.address,
+    BaseRegistrarImplementation: context.baseRegistrar.address,
+    FIFSRegistrar: context.fifsRegistrar.address,
+    ReverseRegistrar: context.reverseRegistrar.address,
+    MetadataService: context.metadataService.address,
+    NameWrapper: context.nameWrapper.address,
+    ETHRegistrarController: context.registrarController.address,
+    PublicResolver: context.publicResolver.address,
+    UniversalResolver: context.universalResolver.address,
+    Multicall: context.multicall.address
+  }, null, 2) + '\'')
 }
-f.tags = ['ENSDeployer']
-export default f

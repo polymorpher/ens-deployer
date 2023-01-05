@@ -69,7 +69,7 @@ export function getBigNumber (amount: string, decimals = 18) {
   return BigNumber.from(amount).mul(BigNumber.from(BASE_TEN).pow(decimals))
 }
 
-export async function deployAll (context) {
+export async function deployAllOrig (context) {
   const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
   console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
   await deploy(context, [

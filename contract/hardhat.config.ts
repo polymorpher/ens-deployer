@@ -73,7 +73,7 @@ const hardhatUserconfig: HardhatUserConfig = {
     currency: 'USD'
   },
   paths: {
-    sources: './contracts',
+    sources: './test/utilities/mocks',
     tests: './test',
     cache: './cache',
     artifacts: './build'
