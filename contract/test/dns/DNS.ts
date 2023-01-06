@@ -1,12 +1,21 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai'
 import { hre, ethers, waffle } from 'hardhat'
-import { Constants, contracts, deployAll } from '../utilities'
+import { Constants, contracts, deployAll, dns } from '../utilities'
 const namehash = require('eth-ens-namehash')
 
 describe('DNS Tests', function () {
-  const node = namehash.hash('country')
-  console.log(`node: ${node}`)
+  const TLD = process.env.TLD || 'country'
+  const node = namehash.hash(TLD)
+  const label = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD))
+  const dnsname = dnsName(TLD)
+  const sha3dnsname = ethers.utils.keccak256(dnsname)
+  const sha3dnsnameString = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(dnsname))
+  console.log(`node             : ${node}`)
+  console.log(`label            : ${label}`)
+  console.log(`dnsname          : ${dnsname}`)
+  console.log(`sha3dnsname      : ${sha3dnsname}`)
+  console.log(`sha3dnsnameString: ${sha3dnsnameString}`)
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
@@ -20,6 +29,12 @@ describe('DNS Tests', function () {
     this.snapshotId = await waffle.provider.send('evm_snapshot', [])
     console.log(`have snapshot: ${this.snapshotId}`)
     console.log(`2. this.publicResolver.address: ${this.publicResolver.address}`)
+    await this.ens.setSubnodeOwner(
+      Constants.EMPTY_BYTES32,
+      ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
+      this.deployer.address,
+      { from: this.deployer.address }
+    )
   })
 
   afterEach(async function () {
@@ -37,13 +52,12 @@ describe('DNS Tests', function () {
   describe('DNS: Check the reading and writing of DNS Entries', async function () {
     const basicSetDNSRecords = async function (this) {
       console.log('HIHIHIHIHIHIHIHIHIHI')
-      //   const ens1234 = namehash.hash('a.ens.')
-      //   console.log(`ens1.2.3.4: ${ens1234}`)
-      //   const country1234 = namehash.hash('a.country. 3600 IN A 1.2.3.4')
-      //   console.log(`country1.2.3.4: ${country1234}`)
       console.log(`3. this.publicResolver.address: ${this.publicResolver.address}`)
       // a.country. 3600 IN A 1.2.3.4
       const arec = '016103657468000001000100000e10000401020304'
+      console.log(`arec from dnsName: ${dnsName('a.country. 3600 IN A 1.2.3.4')}`)
+      //   const ens1234 = namehash.hash('a.country. 3600 IN A 1.2.3.4')
+      //   console.log(`arec from namehash : ${ens1234}`)
       // b.country. 3600 IN A 2.3.4.5
       const b1rec = '016203657468000001000100000e10000402030405'
       // b.country. 3600 IN A 3.4.5.6
@@ -55,9 +69,10 @@ describe('DNS Tests', function () {
 
       await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
 
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000401020304')
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
+      console.log(`a.country: ${ethers.utils.keccak256(dnsName('a.country.'))}`)
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000401020304')
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
     }
     it('permits setting name by owner', basicSetDNSRecords)
 
@@ -289,7 +304,7 @@ function dnsName (name) {
   const bufLen = n === '' ? 1 : n.length + 2
   const buf = Buffer.allocUnsafe(bufLen)
 
-  offset = 0
+  let offset = 0
   if (n.length) {
     const list = n.split('.')
     for (let i = 0; i < list.length; i++) {

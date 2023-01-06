@@ -14,9 +14,9 @@ export async function deploy (context) {
   //   console.log('OracleDeployerDeployed')
   context.oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracleAddress = await context.oracleDeployer.oracle()
-  context.priceOracle = await ethers.getContractAt('MockStablePriceOracle', priceOracleAddress)
+  context.priceOracle = await ethers.getContractAt('StablePriceOracle', priceOracleAddress)
   const usdOracleAddress = await context.oracleDeployer.usdOracle()
-  context.usdOracle = await ethers.getContractAt('MockStablePriceOracle', usdOracleAddress)
+  context.usdOracle = await ethers.getContractAt('StablePriceOracle', usdOracleAddress)
   console.log('- oracleDeployer:', context.oracleDeployer.address)
   console.log('- priceOracle:', context.priceOracle.address)
   console.log('- usdOracle:', await context.usdOracle.address)
@@ -43,17 +43,17 @@ export async function deploy (context) {
   context.ensDeployer = await ethers.getContractAt('ENSDeployer', ENSDeployer.address)
   console.log('- ENSDeployer deployed to:', context.ensDeployer.address)
   console.log('- ens deployed to:', await context.ensDeployer.ens())
-  context.ens = await ethers.getContractAt('MockENSRegistry', await context.ensDeployer.ens())
+  context.ens = await ethers.getContractAt('ENSRegistry', await context.ensDeployer.ens())
 
   console.log('- fifsRegistrar deployed to:', await context.ensDeployer.fifsRegistrar())
-  context.fifsRegistrar = await ethers.getContractAt('MockFIFSRegistrar', await context.ensDeployer.fifsRegistrar())
+  context.fifsRegistrar = await ethers.getContractAt('FIFSRegistrar', await context.ensDeployer.fifsRegistrar())
   console.log('- reverseRegistrar deployed to:', await context.ensDeployer.reverseRegistrar())
-  context.reverseRegistrar = await ethers.getContractAt('MockReverseRegistrar', await context.ensDeployer.reverseRegistrar())
+  context.reverseRegistrar = await ethers.getContractAt('ReverseRegistrar', await context.ensDeployer.reverseRegistrar())
   console.log('- baseRegistrar deployed to:', await context.ensDeployer.baseRegistrar())
-  context.baseRegistrar = await ethers.getContractAt('MockBaseRegistrar', await context.ensDeployer.baseRegistrar())
+  context.baseRegistrar = await ethers.getContractAt('BaseRegistrarImplementation', await context.ensDeployer.baseRegistrar())
 
   console.log('- metadataService deployed to:', await context.ensDeployer.metadataService())
-  context.metadataService = await ethers.getContractAt('MockStaticMetadataService', await context.ensDeployer.metadataService())
+  context.metadataService = await ethers.getContractAt('StaticMetadataService', await context.ensDeployer.metadataService())
   console.log('- nameWrapper deployed to:', await context.ensDeployer.nameWrapper())
   context.nameWrapper = await ethers.getContractAt('TLDNameWrapper', await context.ensDeployer.nameWrapper())
 
@@ -61,10 +61,10 @@ export async function deploy (context) {
   context.registrarController = await ethers.getContractAt('RegistrarController', await context.ensDeployer.registrarController())
 
   console.log('- publicResolver deployed to:', await context.ensDeployer.publicResolver())
-  context.publicResolver = await ethers.getContractAt('MockPublicResolver', await context.ensDeployer.publicResolver())
+  context.publicResolver = await ethers.getContractAt('PublicResolver', await context.ensDeployer.publicResolver())
 
   console.log('- universalResolver deployed to:', await context.ensDeployer.universalResolver())
-  context.universalResolver = await ethers.getContractAt('MockPublicResolver', await context.ensDeployer.universalResolver())
+  context.universalResolver = await ethers.getContractAt('PublicResolver', await context.ensDeployer.universalResolver())
 
   const receipt = await context.ensDeployer.transferOwner(deployer).then(tx => tx.wait())
   console.log('ensDeployer.transferOwner tx', receipt.transactionHash)
