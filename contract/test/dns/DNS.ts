@@ -1,12 +1,15 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai'
-import { hre, ethers, waffle } from 'hardhat'
+import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 const namehash = require('eth-ens-namehash')
 
 describe('DNS Tests', function () {
   const TLD = process.env.TLD || 'country'
-  const node = namehash.hash(TLD)
+  const TLDHASH = namehash.hash(TLD)
+  const DOMAIN = 'test.country'
+  const node = namehash.hash(DOMAIN)
+  const ONE_ETH = ethers.utils.parseEther('1')
   const label = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD))
   const dnsname = dnsName(TLD)
   const sha3dnsname = ethers.utils.keccak256(dnsname)
@@ -19,10 +22,47 @@ describe('DNS Tests', function () {
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
-    console.log(`have snapshot: ${this.beforeSnapshotId}`)
     await contracts.prepare(this, []) // get the signers
     await deployAll.deploy(this)
-    console.log(`1. this.publicResolver.address: ${this.publicResolver.address}`)
+
+    // register test.country
+    const duration = ethers.BigNumber.from(365 * 24 * 3600)
+    const secret = Constants.EMPTY_BYTES32
+    const callData = []
+    const reverseRecord = false
+    const fuses = ethers.BigNumber.from(0)
+    const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
+    // const price = await this.priceOracle.price(node, 0, duration)
+    // console.log(`price  : ${JSON.stringify(price.toString())}`)
+    // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
+    const commitment = await this.registrarController.makeCommitment(
+      node,
+      this.deployer.address,
+      duration,
+      secret,
+      this.publicResolver.address,
+      callData,
+      reverseRecord,
+      fuses,
+      wrapperExpiry
+    )
+    let tx = await this.registrarController.commit(commitment)
+    await tx.wait()
+    tx = await this.registrarController.register(
+      node,
+      this.deployer.address,
+      duration,
+      secret,
+      this.publicResolver.address,
+      callData,
+      reverseRecord,
+      fuses,
+      wrapperExpiry,
+      {
+        value: ONE_ETH.mul(1100)
+      }
+    )
+    await tx.wait()
   })
 
   beforeEach(async function () {
@@ -32,6 +72,7 @@ describe('DNS Tests', function () {
     await this.ens.setSubnodeOwner(
       Constants.EMPTY_BYTES32,
       ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
+      //   TLDHASH,
       this.deployer.address,
       { from: this.deployer.address }
     )
@@ -55,9 +96,6 @@ describe('DNS Tests', function () {
       console.log(`3. this.publicResolver.address: ${this.publicResolver.address}`)
       // a.country. 3600 IN A 1.2.3.4
       const arec = '016103657468000001000100000e10000401020304'
-      console.log(`arec from dnsName: ${dnsName('a.country. 3600 IN A 1.2.3.4')}`)
-      //   const ens1234 = namehash.hash('a.country. 3600 IN A 1.2.3.4')
-      //   console.log(`arec from namehash : ${ens1234}`)
       // b.country. 3600 IN A 2.3.4.5
       const b1rec = '016203657468000001000100000e10000402030405'
       // b.country. 3600 IN A 3.4.5.6
@@ -67,7 +105,7 @@ describe('DNS Tests', function () {
               '03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840'
       const rec = '0x' + arec + b1rec + b2rec + soarec
 
-      await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
+      await this.publicResolver.setDNSRecords(TLDHASH, rec, { from: this.deployer.address })
 
       console.log(`a.country: ${ethers.utils.keccak256(dnsName('a.country.'))}`)
       expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000401020304')

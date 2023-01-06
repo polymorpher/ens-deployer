@@ -27,9 +27,15 @@ library ENSUtils {
 }
 
 library ENSRegistryDeployer {
-    function deployRegistry(
-        string memory tld
-    ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, BaseRegistrarImplementation baseRegistrar) {
+    function deployRegistry(string memory tld)
+        public
+        returns (
+            ENSRegistry ens,
+            FIFSRegistrar fifsRegistrar,
+            ReverseRegistrar reverseRegistrar,
+            BaseRegistrarImplementation baseRegistrar
+        )
+    {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
 
