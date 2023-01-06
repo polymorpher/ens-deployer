@@ -8,7 +8,9 @@
     "scripts": {
         "compile": "npx hardhat compile",
         "deploy": "npx hardhat deploy",
-        "test": "npx hardhat test"
+        "test": "npx hardhat test",
+        "test-deploy": "npx hardhat test ./test/deployment/Deployment.ts",
+        "test-dns": "npx hardhat test ./test/dns/DNS.ts"
     },
     "devDependencies": {
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",

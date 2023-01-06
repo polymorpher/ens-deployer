@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai'
-import { hre, ethers, waffle } from 'hardhat'
+import { waffle } from 'hardhat'
 import { Constants, deployAll } from '../utilities'
 
-describe('Deployments Test', function () {
+describe('Deployment Tests', function () {
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
     console.log(`have snapshot: ${this.beforeSnapshotId}`)
