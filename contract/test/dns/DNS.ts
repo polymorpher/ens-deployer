@@ -5,25 +5,22 @@ import { Constants, contracts, deployAll, dns } from '../utilities'
 const namehash = require('eth-ens-namehash')
 
 describe('DNS Tests', function () {
+  const ONE_ETH = ethers.utils.parseEther('1')
+
+  dns.displayNode('ETH')
+  dns.displayNode('country')
+  dns.displayNode('test.country')
+
   const TLD = process.env.TLD || 'country'
   const TLDHASH = namehash.hash(TLD)
   const DOMAIN = 'test.country'
   const node = namehash.hash(DOMAIN)
-  const ONE_ETH = ethers.utils.parseEther('1')
-  const label = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD))
-  const dnsname = dnsName(TLD)
-  const sha3dnsname = ethers.utils.keccak256(dnsname)
-  const sha3dnsnameString = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(dnsname))
-  console.log(`node             : ${node}`)
-  console.log(`label            : ${label}`)
-  console.log(`dnsname          : ${dnsname}`)
-  console.log(`sha3dnsname      : ${sha3dnsname}`)
-  console.log(`sha3dnsnameString: ${sha3dnsnameString}`)
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
     await contracts.prepare(this, []) // get the signers
     await deployAll.deploy(this)
+    console.log(`nameWrapper.TLD_NODE: ${await this.nameWrapper.TLD_NODE()}`)
 
     // register test.country
     const duration = ethers.BigNumber.from(365 * 24 * 3600)
@@ -36,7 +33,9 @@ describe('DNS Tests', function () {
     // console.log(`price  : ${JSON.stringify(price.toString())}`)
     // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
     const commitment = await this.registrarController.makeCommitment(
-      node,
+    //   node,
+    //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
+      DOMAIN,
       this.deployer.address,
       duration,
       secret,
@@ -49,7 +48,9 @@ describe('DNS Tests', function () {
     let tx = await this.registrarController.commit(commitment)
     await tx.wait()
     tx = await this.registrarController.register(
-      node,
+    //   node,
+    //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
+      DOMAIN,
       this.deployer.address,
       duration,
       secret,
@@ -63,18 +64,49 @@ describe('DNS Tests', function () {
       }
     )
     await tx.wait()
+    console.log('setting record using NameWrapper')
+    // Set  record for the name in the ENS Registry using TLDNameWrapper
+    // tx = await this.nameWrapper.setRecord(
+    //   node, // node,
+    //   this.deployer.address, // owner,
+    //   this.publicResolver.address, // resolver,
+    //   duration // ttl,
+    // )
+    // await tx.wait()
+    // console.log('subNodOwner set')
+    // // Set the subnodeOwner using TLDNameWrapper
+    // tx = await this.nameWrapper.setSubnodeRecord(
+    //   TLDHASH, // parentNode,
+    //   DOMAIN, // label,
+    //   this.deployer.address, // owner,
+    //   this.publicResolver.address, // resolver,
+    //   duration, // ttl,
+    //   fuses, // fuses,
+    //   wrapperExpiry // expiry
+    // )
+    // await tx.wait()
+    console.log('Namewrapper record set')
   })
 
   beforeEach(async function () {
     this.snapshotId = await waffle.provider.send('evm_snapshot', [])
-    await this.ens.setSubnodeOwner(
-      Constants.EMPTY_BYTES32,
-      //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
-      //   TLDHASH,
-      this.deployer.address,
-      { from: this.deployer.address }
-    )
+    // await this.ens.setSubnodeOwner(
+    //   Constants.EMPTY_BYTES32,
+    //   //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
+    //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
+    //   //   TLDHASH,
+    //   this.deployer.address,
+    //   { from: this.deployer.address }
+    // )
+    // await this.ens.setSubnodeOwner(
+    // //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
+    //   TLDHASH,
+    //   //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
+    //   //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country')),
+    //   //   node,
+    //   this.deployer.address,
+    //   { from: this.deployer.address }
+    // )
   })
 
   afterEach(async function () {
@@ -89,6 +121,7 @@ describe('DNS Tests', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading and writing of DNS Entries', async function () {
     const basicSetDNSRecords = async function (this) {
+      console.log('In basicSetDNSRecords')
       // a.country. 3600 IN A 1.2.3.4
       const arec = '016103657468000001000100000e10000401020304'
       // b.country. 3600 IN A 2.3.4.5
@@ -100,9 +133,9 @@ describe('DNS Tests', function () {
               '03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840'
       const rec = '0x' + arec + b1rec + b2rec + soarec
 
-      await this.publicResolver.setDNSRecords(TLDHASH, rec, { from: this.deployer.address })
+      await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
 
-      console.log(`a.country: ${ethers.utils.keccak256(dnsName('a.country.'))}`)
+      console.log(`a.country: ${ethers.utils.keccak256(dns.dnsName('a.country.'))}`)
       expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000401020304')
       expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
       expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
@@ -119,8 +152,8 @@ describe('DNS Tests', function () {
 
       await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
 
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000404050607')
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbe00003d0400000708001baf8000003840')
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000404050607')
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbe00003d0400000708001baf8000003840')
     })
 
     it('should keep track of entries', async function () {
@@ -133,15 +166,15 @@ describe('DNS Tests', function () {
       // Initial check
       let hasEntries = await this.publicResolver.hasDNSRecords(
         node,
-        ethers.utils.keccak256(dnsName('c.country.'))
+        ethers.utils.keccak256(dns.dnsName('c.country.'))
       )
       expect(hasEntries).to.be.true
-      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dnsName('d.country.')))
+      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dns.dnsName('d.country.')))
       expect(hasEntries).to.be.false
 
       // Update with no new data makes no difference
       await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
-      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dnsName('c.country.')))
+      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dns.dnsName('c.country.')))
       expect(hasEntries).to.be.true
 
       // c.country. 3600 IN A
@@ -151,7 +184,7 @@ describe('DNS Tests', function () {
       await this.publicResolver.setDNSRecords(node, rec2, { from: this.deployer.address })
 
       // Removal returns to 0
-      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dnsName('c.country.')))
+      hasEntries = await this.publicResolver.hasDNSRecords(node, ethers.utils.keccak256(dns.dnsName('c.country.')))
       expect(hasEntries).to.be.false
     })
 
@@ -162,7 +195,7 @@ describe('DNS Tests', function () {
 
       await this.publicResolver.setDNSRecords(node, rec, { from: this.deployer.address })
 
-      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('e.country.')), 1)).to.equal('0x016503657468000001000100000e10000401020304')
+      expect(await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('e.country.')), 1)).to.equal('0x016503657468000001000100000e10000401020304')
     })
 
     it('forbids setting DNS records by non-owners', async function () {
@@ -307,15 +340,15 @@ describe('DNS Tests', function () {
       await basicSetDNSRecords()
       await this.publicResolver.clearRecords(node)
       expect(
-        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('a.country.')), 1)).to.equal(
+        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('a.country.')), 1)).to.equal(
         null
       )
       expect(
-        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('b.country.')), 1)).to.equal(
+        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('b.country.')), 1)).to.equal(
         null
       )
       expect(
-        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dnsName('country.')), 6)).to.equal(
+        await this.publicResolver.dnsRecord(node, ethers.utils.keccak256(dns.dnsName('country.')), 6)).to.equal(
         null
       )
     })
@@ -327,30 +360,3 @@ describe('DNS Tests', function () {
     })
   })
 })
-// })
-
-function dnsName (name) {
-  // strip leading and trailing .
-  const n = name.replace(/^\.|\.$/gm, '')
-
-  const bufLen = n === '' ? 1 : n.length + 2
-  const buf = Buffer.allocUnsafe(bufLen)
-
-  let offset = 0
-  if (n.length) {
-    const list = n.split('.')
-    for (let i = 0; i < list.length; i++) {
-      const len = buf.write(list[i], offset + 1)
-      buf[offset] = len
-      offset += len + 1
-    }
-  }
-  buf[offset++] = 0
-  return (
-    '0x' +
-      buf.reduce(
-        (output, elem) => output + ('0' + elem.toString(16)).slice(-2),
-        ''
-      )
-  )
-}
