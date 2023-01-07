@@ -78,16 +78,16 @@ export async function deploy (context) {
   const Multicall = await deploy('Multicall3', { from: deployer })
   context.multicall = await ethers.getContractAt('Multicall3', Multicall.address)
 
-  console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\'' + JSON.stringify({
-    ENSRegistry: context.ens.address,
-    BaseRegistrarImplementation: context.baseRegistrar.address,
-    FIFSRegistrar: context.fifsRegistrar.address,
-    ReverseRegistrar: context.reverseRegistrar.address,
-    MetadataService: context.metadataService.address,
-    NameWrapper: context.nameWrapper.address,
-    ETHRegistrarController: context.registrarController.address,
-    PublicResolver: context.publicResolver.address,
-    UniversalResolver: context.universalResolver.address,
-    Multicall: context.multicall.address
-  }, null, 2) + '\'')
+//   console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\'' + JSON.stringify({
+//     ENSRegistry: context.ens.address,
+//     BaseRegistrarImplementation: context.baseRegistrar.address,
+//     FIFSRegistrar: context.fifsRegistrar.address,
+//     ReverseRegistrar: context.reverseRegistrar.address,
+//     MetadataService: context.metadataService.address,
+//     NameWrapper: context.nameWrapper.address,
+//     ETHRegistrarController: context.registrarController.address,
+//     PublicResolver: context.publicResolver.address,
+//     UniversalResolver: context.universalResolver.address,
+//     Multicall: context.multicall.address
+//   }, null, 2) + '\'')
 }

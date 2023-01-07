@@ -67,10 +67,9 @@ describe('DNS Tests', function () {
 
   beforeEach(async function () {
     this.snapshotId = await waffle.provider.send('evm_snapshot', [])
-    console.log(`have snapshot: ${this.snapshotId}`)
-    console.log(`2. this.publicResolver.address: ${this.publicResolver.address}`)
     await this.ens.setSubnodeOwner(
       Constants.EMPTY_BYTES32,
+      //   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN)),
       ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
       //   TLDHASH,
       this.deployer.address,
@@ -80,20 +79,16 @@ describe('DNS Tests', function () {
 
   afterEach(async function () {
     await waffle.provider.send('evm_revert', [this.snapshotId])
-    console.log(`have reverted: ${this.snapshotId}`)
   })
 
   after(async function () {
     await waffle.provider.send('evm_revert', [this.beforeSnapshotId])
-    console.log(`have reverted: ${this.beforeSnapshotId}`)
   })
 
   //   describe('DNS: Check the reading and writing of DNS Entries', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading and writing of DNS Entries', async function () {
     const basicSetDNSRecords = async function (this) {
-      console.log('HIHIHIHIHIHIHIHIHIHI')
-      console.log(`3. this.publicResolver.address: ${this.publicResolver.address}`)
       // a.country. 3600 IN A 1.2.3.4
       const arec = '016103657468000001000100000e10000401020304'
       // b.country. 3600 IN A 2.3.4.5
@@ -115,7 +110,6 @@ describe('DNS Tests', function () {
     it('permits setting name by owner', basicSetDNSRecords)
 
     it('should update existing records', async function () {
-      console.log(`4. this.publicResolver.address: ${this.publicResolver.address}`)
       // a.country. 3600 IN A 4.5.6.7
       const arec = '016103657468000001000100000e10000404050607'
       // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061502 15620 1800 1814400 14400
