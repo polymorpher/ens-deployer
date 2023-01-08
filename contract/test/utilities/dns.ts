@@ -1,6 +1,6 @@
 import { packet } from 'dns-packet'
 import { ethers } from 'hardhat'
-import { Constants } from '../utilities'
+import { Constants, utils } from '../utilities'
 // import { namehash } from 'eth-ens-namehash'
 const namehash = require('eth-ens-namehash')
 
@@ -13,14 +13,16 @@ export function hexEncodeTXT (keys) {
 }
 
 export function displayNode (node) {
-  console.log(`node              : ${node}`)
-  console.log(`node.namehash     : ${namehash.hash(node)}`)
+  console.log(`node                : ${node}`)
+  console.log(`node.dns.namehash   : ${namehash.hash(node)}`)
+  console.log(`node.label.k256.b   : ${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node))}`)
+  console.log(`node.utils.namehash : ${utils.utils.namehash(node)}`)
+  console.log(`node.utils.namehashS: ${utils.utils.bytesToHexString(utils.utils.namehash(node))}`)
+  console.log(`node.toUtfBytes     : ${ethers.utils.toUtf8Bytes(node)}`)
+  console.log(`node.dnsName        : ${dnsName(node)}`)
   // TLD_NODE = keccak256(bytes.concat(bytes32(0), keccak256(bytes(_tld))));
   // console.log(`node.namehash0  : ${ethers.utils.keccak256(ethers.utils.concat(Constants.EMPTY_BYTES32, ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node)));
-  console.log(`node.toUtfBytes   : ${ethers.utils.toUtf8Bytes(node)}`)
-  console.log(`node.label.k256.b : ${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node))}`)
   //   console.log(`node.keccak256: ${ethers.utils.keccak256(node)}`)
-  console.log(`node.dnsName      : ${dnsName(node)}`)
 }
 
 export function dnsName (name) {

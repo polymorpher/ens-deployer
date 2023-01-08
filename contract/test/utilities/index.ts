@@ -6,6 +6,7 @@ import * as dns from './dns'
 import * as ens from './ens'
 import * as exceptions from './exceptions'
 import * as reverse from './reverse'
+import * as utils from './utils'
 
 export {
   Constants,
@@ -14,7 +15,8 @@ export {
   dns,
   ens,
   exceptions,
-  reverse
+  reverse,
+  utils
 }
 
 // // export const Constants
