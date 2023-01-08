@@ -11,11 +11,15 @@ describe('DNS Tests', function () {
   dns.displayNode('ETH')
   dns.displayNode('country')
   dns.displayNode('test.country')
+  dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
   const TLDHASH = namehash.hash(TLD)
   const DOMAIN = 'test.country'
-  const node = namehash.hash(DOMAIN)
+  //   const DOMAINHASH = namehash.hash(DOMAIN)
+  const DOMAINK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN))
+  const node = ethers.utils.keccak256(ethers.utils.concat([TLDHASH, DOMAINK256]))
+  console.log(`node: ${node}`)
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
@@ -33,8 +37,9 @@ describe('DNS Tests', function () {
     // const price = await this.priceOracle.price(node, 0, duration)
     // console.log(`price  : ${JSON.stringify(price.toString())}`)
     // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
-    await this.registrarController.connect(this.alice.address)
-    const commitment = await this.registrarController.makeCommitment(
+    console.log(`BeforeAll Deployer: ${this.deployer.address}`)
+    console.log(`BeforeAll Alice   : ${this.alice.address}`)
+    const commitment = await this.registrarController.connect(this.alice).makeCommitment(
       DOMAIN,
       this.alice.address,
       duration,
@@ -45,8 +50,9 @@ describe('DNS Tests', function () {
       fuses,
       wrapperExpiry
     )
-    let tx = await this.registrarController.commit(commitment)
+    let tx = await this.registrarController.connect(this.alice).commit(commitment)
     await tx.wait()
+    console.log('=====REGISTERING test.country=====')
     tx = await this.registrarController.register(
       DOMAIN,
       this.alice.address,
@@ -62,17 +68,11 @@ describe('DNS Tests', function () {
       }
     )
     await tx.wait()
+    console.log('End before all')
   })
 
   beforeEach(async function () {
     this.snapshotId = await waffle.provider.send('evm_snapshot', [])
-    const tx = await this.ens.setSubnodeOwner(
-      Constants.EMPTY_BYTES32,
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)),
-      this.alice.address,
-      { from: this.deployer.address }
-    )
-    await tx.wait()
   })
 
   afterEach(async function () {
@@ -100,8 +100,12 @@ describe('DNS Tests', function () {
       const rec = '0x' + arec + b1rec + b2rec + soarec
 
       console.log('About to set DNS')
-      await context.publicResolver.connect(context.alice.address)
-      await context.publicResolver.setDNSRecords(TLDHASH, rec)
+      console.log(`Deployer address: ${context.deployer.address}`)
+      console.log(`Alice address   : ${context.alice.address}`)
+      // node = k256hash(country.namehash + domain.namehash)
+
+      const tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, rec, { from: context.alice.address })
+      await tx.wait()
       //   await context.publicResolver.setDNSRecords(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)), rec)
 
       console.log(`a.country: ${ethers.utils.keccak256(dns.dnsName('a.country.'))}`)
