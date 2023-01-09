@@ -5,7 +5,7 @@ This folder holds test suites for deployment of ens contracts and reading writin
 It can be enhance further as functionality is rolled out.
 
 **TODO Items**
-- [ ] Review logic when running all tests to ensure that timeouts do not occure
+- [ ] Review logic when running all tests to ensure that timeouts do not occur.
 - [ ] Review additional [ens tests](https://github.com/jw-ens-domains/ens-contracts/tree/master/test)
 - [ ] Enhance DNS Record to support more [record types](https://en.wikipedia.org/wiki/List_of_DNS_record_types) as needed.
 
