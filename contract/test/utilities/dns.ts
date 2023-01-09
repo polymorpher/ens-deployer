@@ -87,7 +87,7 @@ export function encodeARecord (recName, recAddress) {
 
 export function encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
   // Sample Mapping
-  // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
+  // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   /*
    name: test.country.
    ttL: 86400
@@ -118,5 +118,25 @@ export function encodeSRecord (recName, primary, admin, serial, refresh, retry, 
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
   //   console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
+}
+
+export function encodeTXTRecord (recName, recText) {
+  // Sample Mapping
+  // test.country. SampleText
+  /*
+    name:  test.country.
+    data: SampleText
+    */
+  // returns
+  const rec = {
+    name: recName,
+    type: DNSRecord.Type.TXT,
+    class: DNSRecord.Class.IN,
+    data: recText
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  console.log(`recordText: ${b.toString('hex')}`)
   return b.toString('hex')
 }

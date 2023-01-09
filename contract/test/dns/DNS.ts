@@ -31,6 +31,9 @@ describe('DNS Tests', function () {
   const eNameHash = ethers.utils.keccak256(dns.dnsName(eName))
   const fName = 'f.' + nameDOMAIN
   const fNameHash = ethers.utils.keccak256(dns.dnsName(fName))
+  const txtDOMAINName = 'TXT.' + DOMAIN
+  const txtDOMAINNameHash = ethers.utils.keccak256(dns.dnsName(txtDOMAINName))
+
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
   const initARec = dns.encodeARecord(aName, '1.2.3.4')
@@ -114,12 +117,6 @@ describe('DNS Tests', function () {
   //   describe('DNS: Check the reading and writing of DNS Entries', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading of initial DNS Entries', async function () {
-    const basicSetDNSRecords = async function (context) {
-      expect(await context.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
-      expect(await context.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
-      expect(await context.publicResolver.dnsRecord(node, nameDOMAINHash, Constants.DNSRecordType.SOA)).to.equal('0x' + initSOARec)
-    }
-
     it('DNS-001 permits setting name by owner', async function () {
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
@@ -175,7 +172,7 @@ describe('DNS Tests', function () {
     })
 
     it('DNS-004 should handle single-record updates', async function () {
-      // e.country. 3600 IN A 1.2.3.4
+      // e.test.country. 3600 IN A 1.2.3.4
       const eRec = dns.encodeARecord(eName, '1.2.3.4')
       const rec = '0x' + eRec
 
@@ -185,22 +182,13 @@ describe('DNS Tests', function () {
     })
 
     it('DNS-005 forbids setting DNS records by non-owners', async function () {
-      // f.country. 3600 IN A 1.2.3.4
+      // f.test.country. 3600 IN A 1.2.3.4
       const fRec = dns.encodeARecord(fName, '1.2.3.4')
       const rec = '0x' + fRec
       await expect(
         this.publicResolver.connect(this.bob).setDNSRecords(node, rec)
       ).to.be.reverted
     })
-
-    // const basicSetZonehash = async () => {
-    //   await this.publicResolver.setZonehash(
-    //     node,
-    //     '0x0000000000000000000000000000000000000000000000000000000000000001',
-    //     { from: this.alice.address }
-    //   )
-    //   expect(await this.publicResolver.zonehash(node)).to.equal('0x0000000000000000000000000000000000000000000000000000000000000001')
-    // }
 
     it('DNS-006 permits setting zonehash by owner', async function () {
       expect(await this.publicResolver.zonehash(node)).to.equal('0x0000000000000000000000000000000000000000000000000000000000000001')
@@ -251,7 +239,7 @@ describe('DNS Tests', function () {
       //   expect(await this.publicResolver.zonehash(node)).to.equal(null)
     })
 
-    it('emits the correct event', async function () {
+    it('DNS-012 emits the correct event', async function () {
       let tx = await this.publicResolver.connect(this.alice).setZonehash(
         node,
         '0x0000000000000000000000000000000000000000000000000000000000000002'
@@ -303,7 +291,7 @@ describe('DNS Tests', function () {
       )
     })
 
-    it('DNS-012 resets dnsRecords on version change', async function () {
+    it('DNS-013 resets dnsRecords on version change', async function () {
       await this.publicResolver.connect(this.alice).clearRecords(node)
       expect(
         await this.publicResolver.dnsRecord(node, aNameHash, 1)).to.equal(
@@ -319,9 +307,19 @@ describe('DNS Tests', function () {
       )
     })
 
-    it('resets zonehash on version change', async function () {
+    it('DNS-014 resets zonehash on version change', async function () {
       await this.publicResolver.connect(this.alice).clearRecords(node)
       expect(await this.publicResolver.zonehash(node)).to.equal('0x')
     })
+  })
+
+  it('DNS-015 should handle TXT record updates', async function () {
+    // test.country. SampleText
+    const txtRec = dns.encodeTXTRecord(nameDOMAIN, 'SampleText')
+    const rec = '0x' + txtRec
+
+    await this.publicResolver.connect(this.alice).setDNSRecords(node, rec)
+
+    expect(await this.publicResolver.dnsRecord(node, nameDOMAINHash, 16)).to.equal('0x' + txtRec)
   })
 })

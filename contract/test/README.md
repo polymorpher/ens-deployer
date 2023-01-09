@@ -1,3 +1,13 @@
+# ens-deployer Test Suite
+
+## Overview
+This folder holds test suites for deployment of ens contracts and reading writing of dns records.
+It can be enhance further as functionality is rolled out.
+
+**TODO Items**
+- [ ] Review logic when running all tests to ensure that timeouts do not occure
+- [ ] Review additional [ens tests](https://github.com/jw-ens-domains/ens-contracts/tree/master/test)
+- [ ] Enhance DNS Record to support more [record types](https://en.wikipedia.org/wiki/List_of_DNS_record_types) as needed.
 
 ## Setup
 
@@ -33,37 +43,31 @@ function writeA(out, ip) {
 *Note: An alternative to above would be to modify DNSResolver.sol to check for a zero IP address in setDNSRecords*
 
 ## Testing
+
+Test helpers added to package.json
+* `yarn test`: runs all tests 
+* `yarn test-deploy`: tests the deployment of all contracts
+* `yarn test-dns`: tests the reading and writing of dns records
+
+Running a functional area by file
+`npx hardhat test ./test/deployment/Deployment.ts`
+
 Running specific tests
 
 `npx hardhat test --grep 'permits setting name by owner'`
 
 
-## Data Overview
-
-Top Level Domain: `.country`
-* Owned by the Base Registrar (set in ENSDeployer.sol (set_ownership))
-* node value `ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country'))`
-  * `country node: 0xf1a1906f2fac0ea55077bc9cbf098b1a1374c3113629ef9fe79e93bba7aca4b1`
-* Note this is different from `namehash.hash('country)`
-  * `TLDHASH: 0xad4be81514036b9f6ff6c5f69394daacc516c82bd6dc4756d7f6ef1b3f9ea717`
-
-
-SubDomain: `test.country`
-* Owned by the User Registering the Domain
-
-DNS Entries
-
-
-
-
-## User Overview
-
-
-
 
 ## DNS Record Mapping
 
-For Record types see [dns-packet](https://www.npmjs.com/package/dns-packet) for detailedrecord field mapping we use [dns-js](https://www.npmjs.com/package/dns-js) logic is in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js)
+For a complete list of DNS record types see [this wikiepedia page](https://en.wikipedia.org/wiki/List_of_DNS_record_types)
+
+For Record types and data strucures see [dns-packet](https://www.npmjs.com/package/dns-packet).
+
+For detailedrecord field mapping we use [dns-js](https://www.npmjs.com/package/dns-js) logic is in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js).
+
+Implementaion of mappings are documented in [./utilities/dns.ts](./utilities/dns.ts).
+
 
 **RR Structure from dnssec-oracle RRUtils.sol**
 ```
@@ -120,3 +124,131 @@ RRSIG.RRUTILS: data, offset, dnstype,class,ttL, rdataOffset, nextOffset, name, v
 * name: `0x016207636f756e74727900`
 * value: `0x02030405`
 
+## Appendicies
+
+### Sample test-dns run
+```
+johnlaptop contract (web2) $ yarn test-dns
+yarn run v1.22.19
+$ npx hardhat test ./test/dns/DNS.ts
+No need to generate any newer typings.
+ ·-------------------------------|--------------|----------------·
+ |  Contract Name                ·  Size (KiB)  ·  Change (KiB)  │
+ ································|··············|·················
+ |  Address                      ·       0.084  ·                │
+ ································|··············|·················
+ |  BaseRegistrarImplementation  ·       7.321  ·                │
+ ································|··············|·················
+ |  Buffer                       ·       0.084  ·                │
+ ································|··············|·················
+ |  BytesUtils                   ·       0.084  ·                │
+ ································|··············|·················
+ |  BytesUtils                   ·       0.084  ·                │
+ ································|··············|·················
+ |  console                      ·       0.084  ·                │
+ ································|··············|·················
+ |  Controllable                 ·       0.799  ·                │
+ ································|··············|·················
+ |  Controllable                 ·       0.799  ·                │
+ ································|··············|·················
+ |  DummyOracle                  ·       0.168  ·                │
+ ································|··············|·················
+ |  ENSControllerDeployer        ·       9.678  ·                │
+ ································|··············|·················
+ |  ENSDeployer                  ·      17.640  ·                │
+ ································|··············|·················
+ |  ENSNFTDeployer               ·      23.130  ·                │
+ ································|··············|·················
+ |  ENSPublicResolverDeployer    ·      12.341  ·                │
+ ································|··············|·················
+ |  ENSRegistry                  ·       2.427  ·                │
+ ································|··············|·················
+ |  ENSRegistryDeployer          ·      16.554  ·                │
+ ································|··············|·················
+ |  ENSUtils                     ·       0.458  ·                │
+ ································|··············|·················
+ |  ERC20Recoverable             ·       0.796  ·                │
+ ································|··············|·················
+ |  ERC721                       ·       4.261  ·                │
+ ································|··············|·················
+ |  FIFSRegistrar                ·       0.574  ·                │
+ ································|··············|·················
+ |  LowLevelCallUtils            ·       0.084  ·                │
+ ································|··············|·················
+ |  Multicall3                   ·       3.202  ·                │
+ ································|··············|·················
+ |  NameEncoder                  ·       0.084  ·                │
+ ································|··············|·················
+ |  OracleDeployer               ·       0.607  ·                │
+ ································|··············|·················
+ |  PublicResolver               ·      11.163  ·                │
+ ································|··············|·················
+ |  RegistrarController          ·       7.704  ·                │
+ ································|··············|·················
+ |  ReverseRegistrar             ·       3.119  ·                │
+ ································|··············|·················
+ |  RRUtils                      ·       0.084  ·                │
+ ································|··············|·················
+ |  SafeMath                     ·       0.084  ·                │
+ ································|··············|·················
+ |  StablePriceOracle            ·       1.901  ·                │
+ ································|··············|·················
+ |  StaticMetadataService        ·       0.441  ·                │
+ ································|··············|·················
+ |  Strings                      ·       0.084  ·                │
+ ································|··············|·················
+ |  StringUtils                  ·       0.084  ·                │
+ ································|··············|·················
+ |  TLDNameWrapper               ·      19.767  ·                │
+ ································|··············|·················
+ |  UniversalResolver            ·      11.788  ·                │
+ ·-------------------------------|--------------|----------------·
+
+
+  DNS Tests
+ORACLE_UNIT_PRICE 330000
+deployer account 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+- oracleDeployer: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+- priceOracle: 0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968
+- usdOracle: 0xa16E02E87b7454126E5E10d957A927A7F5B5d2be
+- ENSDeployer deployed to: 0x0165878A594ca255338adfa4d48449f69242Eb8F
+- ens deployed to: 0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B
+- fifsRegistrar deployed to: 0xBA12646CC07ADBe43F8bD25D83FB628D29C8A762
+- reverseRegistrar deployed to: 0x7ab4C4804197531f7ed6A6bc0f0781f706ff7953
+- baseRegistrar deployed to: 0xc8CB5439c767A63aca1c01862252B2F3495fDcFE
+- metadataService deployed to: 0xD79aE87F2c003Ec925fB7e9C11585709bfe41473
+- nameWrapper deployed to: 0xB7aa4c318000BB9bD16108F81C40D02E48af1C42
+- registrarController deployed to: 0x12653A08808F651D5BB78514F377d3BD5E17934C
+- publicResolver deployed to: 0xCaA29B65446aBF1A513A178402A0408eB3AEee75
+- universalResolver deployed to: 0x09F428b7D940ED8Bff862e81a103bf022F5E50F0
+ensDeployer.transferOwner tx 0xb9d767d1c0c641b629bfdd2d3b8f46385447ecd1a73941a412f0979f546f1edb
+ens owner: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+resolver node owner: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+reverse registrar node owner: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+setting DNSRRset
+setting DNSRRset
+recordText: 047465737407636f756e747279000010000100000000002803303d5303313d6103323d6d03333d7003343d6c03353d6503363d5403373d6503383d7803393d74
+    ✔ DNS-015 should handle TXT record updates
+    DNS: Check the reading of initial DNS Entries
+      ✔ DNS-001 permits setting name by owner
+setting DNSRRset
+      ✔ DNS-002 should update existing records (43ms)
+      ✔ DNS-003 should keep track of entries (62ms)
+      ✔ DNS-004 should handle single-record updates
+      ✔ DNS-005 forbids setting DNS records by non-owners
+      ✔ DNS-006 permits setting zonehash by owner
+      ✔ DNS-007 can overwrite previously set zonehash
+      ✔ DNS-008 can overwrite to same zonehash
+      ✔ DNS-009 forbids setting zonehash by non-owners
+      ✔ DNS-010 forbids writing same zonehash by non-owners
+      ✔ DNS-011 returns empty when fetching nonexistent zonehash
+      ✔ DNS-012 emits the correct event (43ms)
+      ✔ DNS-013 resets dnsRecords on version change
+      ✔ DNS-014 resets zonehash on version change
+
+
+  15 passing (3s)
+
+✨  Done in 5.02s.
+johnlaptop contract (web2) $
+```
