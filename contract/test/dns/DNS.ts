@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 // import { getTxCost } from '../utilities/contracts'
-const namehash = require('eth-ens-namehash')
+// const namehash = require('eth-ens-namehash')
 
 describe('DNS Tests', function () {
   const ONE_ETH = ethers.utils.parseEther('1')
@@ -14,18 +14,13 @@ describe('DNS Tests', function () {
   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
-  const TLDHASH = namehash.hash(TLD)
   const DOMAIN = 'test.country'
-  //   const DOMAINHASH = namehash.hash(DOMAIN)
-  const DOMAINK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(DOMAIN))
-  const node = ethers.utils.keccak256(ethers.utils.concat([TLDHASH, DOMAINK256]))
-  console.log(`node: ${node}`)
+  const node = dns.makeNode(TLD, DOMAIN)
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
     await contracts.prepare(this, []) // get the signers
     await deployAll.deploy(this)
-    console.log(`nameWrapper.TLD_NODE: ${await this.nameWrapper.TLD_NODE()}`)
 
     // register test.country
     const duration = ethers.BigNumber.from(365 * 24 * 3600)
@@ -37,8 +32,6 @@ describe('DNS Tests', function () {
     // const price = await this.priceOracle.price(node, 0, duration)
     // console.log(`price  : ${JSON.stringify(price.toString())}`)
     // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
-    console.log(`BeforeAll Deployer: ${this.deployer.address}`)
-    console.log(`BeforeAll Alice   : ${this.alice.address}`)
     const commitment = await this.registrarController.connect(this.alice).makeCommitment(
       DOMAIN,
       this.alice.address,
@@ -52,7 +45,6 @@ describe('DNS Tests', function () {
     )
     let tx = await this.registrarController.connect(this.alice).commit(commitment)
     await tx.wait()
-    console.log('=====REGISTERING test.country=====')
     tx = await this.registrarController.register(
       DOMAIN,
       this.alice.address,
@@ -68,7 +60,6 @@ describe('DNS Tests', function () {
       }
     )
     await tx.wait()
-    console.log('End before all')
   })
 
   beforeEach(async function () {
@@ -87,31 +78,36 @@ describe('DNS Tests', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading and writing of DNS Entries', async function () {
     const basicSetDNSRecords = async function (context) {
-      console.log('In basicSetDNSRecords')
+      //   const DNSRecords = dns.encodeRecords(dns.records)
+      //   console.log(`DNSRecords: ${JSON.stringify(DNSRecords)}`)
+      const aname = ethers.utils.keccak256(dns.dnsName('a.country.'))
       // a.country. 3600 IN A 1.2.3.4
-      const arec = '016103657468000001000100000e10000401020304'
+      const arec = '016107636f756e747279000001000100000e10000401020304'
+      const bname = ethers.utils.keccak256(dns.dnsName('b.country.'))
       // b.country. 3600 IN A 2.3.4.5
-      const b1rec = '016203657468000001000100000e10000402030405'
+      const b1rec = '016207636f756e747279000001000100000e10000402030405'
       // b.country. 3600 IN A 3.4.5.6
-      const b2rec = '016203657468000001000100000e10000403040506'
+      const b2rec = '016207636f756e747279000001000100000e10000403040506'
       // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
+      const nameCountry = ethers.utils.keccak256(dns.dnsName('country.'))
       const soarec =
-              '03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840'
+              '07636f756e747279000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840'
       const rec = '0x' + arec + b1rec + b2rec + soarec
 
       console.log('About to set DNS')
       console.log(`Deployer address: ${context.deployer.address}`)
       console.log(`Alice address   : ${context.alice.address}`)
-      // node = k256hash(country.namehash + domain.namehash)
 
-      const tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, rec, { from: context.alice.address })
+      const tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, rec)
       await tx.wait()
-      //   await context.publicResolver.setDNSRecords(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(TLD)), rec)
 
-      console.log(`a.country: ${ethers.utils.keccak256(dns.dnsName('a.country.'))}`)
-      expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('a.country.')), 1)).to.equal('0x016103657468000001000100000e10000401020304')
-      expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
-      expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
+      console.log(`ethdnsName: ${dns.dnsName('eth.')}`)
+      console.log(`countrydnsName: ${dns.dnsName('country.')}`)
+      expect(await context.publicResolver.dnsRecord(node, aname, Constants.DNSRecordType.A)).to.equal('0x016107636f756e747279000001000100000e10000401020304')
+      expect(await context.publicResolver.dnsRecord(node, bname, Constants.DNSRecordType.A)).to.equal('0x016207636f756e747279000001000100000e10000402030405016207636f756e747279000001000100000e10000403040506')
+      expect(await context.publicResolver.dnsRecord(node, nameCountry, Constants.DNSRecordType.SOA)).to.equal('0x07636f756e747279000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
+    //   expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
+    //   expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
     }
 
     it('permits setting name by owner', function (done) {
