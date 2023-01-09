@@ -1,4 +1,36 @@
 
+## Setup
+
+**Initialize the repository**
+```
+git clone https://github.com/polymorpher/ens-deployer
+cd ens-deployer/contract
+yarn install
+```
+
+**Expose buffer functionality**
+
+For testing we need to modify the [dns-js](https://www.npmjs.com/package/dns-js) package to expose `bufferwriter` and  `bufferconsumer` this is done by modifying [index.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/index.js) by editing the file `node_modules/dns-js/lib/index.js` and adding two lines so the file is as follows
+```
+exports.BufferWriter = require('./bufferwriter');
+exports.BufferConsumer = require('./bufferconsumer');
+exports.DNSPacket = require('./dnspacket');
+exports.DNSRecord = require('./dnsrecord');
+exports.errors = require('./errors');
+exports.parse = exports.DNSPacket.parse;
+```
+Also to enable deletion of A records need to modify writeA to return if no ip is passed `if (ip === '') { return; }`
+Code is at `node_modules/dns-js/lib/dnsrecord.js`  function is modified as follows
+```
+function writeA(out, ip) {
+  if (ip === '') { return; }
+  var parts = ip.split('.');
+  for (var i = 0; i < 4; i++) {
+    out.byte(parts[i]);
+  }
+}
+```
+*Note: An alternative to above would be to modify DNSResolver.sol to check for a zero IP address in setDNSRecords*
 
 ## Testing
 Running specific tests
@@ -30,6 +62,8 @@ DNS Entries
 
 
 ## DNS Record Mapping
+
+For Record types see [dns-packet](https://www.npmjs.com/package/dns-packet) for detailedrecord field mapping we use [dns-js](https://www.npmjs.com/package/dns-js) logic is in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js)
 
 **RR Structure from dnssec-oracle RRUtils.sol**
 ```

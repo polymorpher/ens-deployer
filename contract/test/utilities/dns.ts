@@ -59,13 +59,61 @@ export function dnsName (name) {
 }
 
 export function encodeARecord (recName, recAddress) {
+  // Sample Mapping
   // a.country. 3600 IN A 1.2.3.4
-  const rec = {
+  /*
+    name: a.test.country
+    type: A
+    class: IN
+    ttl: 3600
+    address: 1.2.3.4
+  */
+  // returns 0161047465737407636f756e747279000001000100000e10000401020304
+
+  // a empty address is used to remove existing records
+  let rec = {}
+  rec = {
     name: recName,
     type: DNSRecord.Type.A,
     class: DNSRecord.Class.IN,
     ttl: 3600,
     address: recAddress
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  //   console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
+}
+
+export function encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
+  // Sample Mapping
+  // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
+  /*
+   name: test.country.
+   ttL: 86400
+   class: IN
+   type: SOA
+   primary: ns1.countrydns.xyz.
+   admin: hostmaster.test.country.
+   serial: 2018061501
+   refresh: 15620
+   retry: 1800
+   expiration: 1814400
+   minimum: 14400
+  */
+  // returns  047465737407636f756e747279000006000100000000003a036e73310a636f756e747279646e730378797a000a686f73746d61737465720474657374c00578492cbd00003d0400000708001baf8000003840
+  const rec = {
+    name: recName,
+    ttL: 86400,
+    type: DNSRecord.Type.SOA,
+    class: DNSRecord.Class.IN,
+    primary,
+    admin,
+    serial,
+    refresh,
+    retry,
+    expiration,
+    minimum
   }
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
