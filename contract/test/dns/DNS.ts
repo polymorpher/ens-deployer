@@ -78,36 +78,25 @@ describe('DNS Tests', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading and writing of DNS Entries', async function () {
     const basicSetDNSRecords = async function (context) {
-      //   const DNSRecords = dns.encodeRecords(dns.records)
-      //   console.log(`DNSRecords: ${JSON.stringify(DNSRecords)}`)
       const aname = ethers.utils.keccak256(dns.dnsName('a.country.'))
       // a.country. 3600 IN A 1.2.3.4
-      const arec = '016107636f756e747279000001000100000e10000401020304'
+      const arec = dns.encodeARecord('a.country.', '1.2.3.4')
       const bname = ethers.utils.keccak256(dns.dnsName('b.country.'))
       // b.country. 3600 IN A 2.3.4.5
-      const b1rec = '016207636f756e747279000001000100000e10000402030405'
+      const b1rec = dns.encodeARecord('b.country.', '2.3.4.5')
       // b.country. 3600 IN A 3.4.5.6
-      const b2rec = '016207636f756e747279000001000100000e10000403040506'
+      const b2rec = dns.encodeARecord('b.country.', '3.4.5.6')
       // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
       const nameCountry = ethers.utils.keccak256(dns.dnsName('country.'))
       const soarec =
               '07636f756e747279000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840'
       const rec = '0x' + arec + b1rec + b2rec + soarec
-
-      console.log('About to set DNS')
-      console.log(`Deployer address: ${context.deployer.address}`)
-      console.log(`Alice address   : ${context.alice.address}`)
-
       const tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, rec)
       await tx.wait()
 
-      console.log(`ethdnsName: ${dns.dnsName('eth.')}`)
-      console.log(`countrydnsName: ${dns.dnsName('country.')}`)
       expect(await context.publicResolver.dnsRecord(node, aname, Constants.DNSRecordType.A)).to.equal('0x016107636f756e747279000001000100000e10000401020304')
       expect(await context.publicResolver.dnsRecord(node, bname, Constants.DNSRecordType.A)).to.equal('0x016207636f756e747279000001000100000e10000402030405016207636f756e747279000001000100000e10000403040506')
       expect(await context.publicResolver.dnsRecord(node, nameCountry, Constants.DNSRecordType.SOA)).to.equal('0x07636f756e747279000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
-    //   expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('b.country.')), 1)).to.equal('0x016203657468000001000100000e10000402030405016203657468000001000100000e10000403040506')
-    //   expect(await context.publicResolver.dnsRecord(node, ethers.utils.keccak256(ethers.utils.toUtf8Bytes('country.')), 6)).to.equal('0x03657468000006000100015180003a036e733106657468646e730378797a000a686f73746d6173746572057465737431036574680078492cbd00003d0400000708001baf8000003840')
     }
 
     it('permits setting name by owner', function (done) {

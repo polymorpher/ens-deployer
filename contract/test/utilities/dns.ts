@@ -1,5 +1,6 @@
 import { packet, encode, decode } from 'dns-packet'
 import { ethers } from 'hardhat'
+import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
 import { Constants, utils } from '../utilities'
 // import { namehash } from 'eth-ens-namehash'
 const namehash = require('eth-ens-namehash')
@@ -79,10 +80,25 @@ export function dnsName (name) {
   )
 }
 
-export function encodeRecords (records) {
-  const buf = encode(records[0])
-  console.log(`records: ${JSON.stringify(records)}`)
-  console.log(`buf: ${JSON.stringify(buf)}`)
-  console.log(`bufDecode: ${JSON.stringify(decode(buf))}`)
-  return records
+// export function encodeRecords (records) {
+//   const buf = encode(records[0])
+//   console.log(`records: ${JSON.stringify(records)}`)
+//   console.log(`buf: ${JSON.stringify(buf)}`)
+//   console.log(`bufDecode: ${JSON.stringify(decode(buf))}`)
+//   return records
+// }
+
+export function encodeARecord (recName, recAddress) {
+  // a.country. 3600 IN A 1.2.3.4
+  const rec = {
+    name: recName,
+    type: DNSRecord.Type.A,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    address: recAddress
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  //   console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
 }
