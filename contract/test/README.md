@@ -59,6 +59,21 @@ Running specific tests
 `npx hardhat test --grep 'permits setting name by owner'`
 
 
+## Writing tests
+
+We use hardhat, waffle, chai and ethers for testing. 
+Tests are designed to be executed indvidually, as a suite or running all tests.
+As such we take snapshots and revert beforeach test and do any initialization at the functional level.
+
+Following are some useful references
+* [ethers utilities](https://docs.ethers.org/v5/api/utils/): Useful utilties 
+* [Waffle Chai Matchers](https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#): Useful for solidity specific tests.
+* [Chai Assertion Library](https://www.chaijs.com/api/assert/): General assertions, also review [BDD styles expect and should](https://www.chaijs.com/api/assert/)
+* [console.log](https://hardhat.org/hardhat-network/docs/reference#console.log): useful to debug solidity contracts.
+* [ens documentation](https://docs.ens.domains/): useful for understaning functionality being developed
+* [DNS Record Types](https://en.wikipedia.org/wiki/List_of_DNS_record_types): List of all DNS record types
+* [dns-packet](https://www.npmjs.com/package/dns-packet): Good overview of DNS record structures
+* [dns-js](https://www.npmjs.com/package/dns-js): Used for writing DNS records, detailed logic can be found in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js) 
 
 ## DNS Record Mapping
 
