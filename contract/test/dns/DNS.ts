@@ -31,8 +31,6 @@ describe('DNS Tests', function () {
   const eNameHash = ethers.utils.keccak256(dns.dnsName(eName))
   const fName = 'f.' + nameDOMAIN
   const fNameHash = ethers.utils.keccak256(dns.dnsName(fName))
-  const txtDOMAINName = 'TXT.' + DOMAIN
-  const txtDOMAINNameHash = ethers.utils.keccak256(dns.dnsName(txtDOMAINName))
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
