@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-ethers'
 import '@typechain/hardhat'
 import 'hardhat-gas-reporter'
+import 'hardhat-abi-exporter'
 import 'hardhat-deploy'
 import 'solidity-coverage'
 import '@atixlabs/hardhat-time-n-mine'
@@ -80,6 +81,44 @@ const hardhatUserconfig: HardhatUserConfig = {
   },
   mocha: {
     timeout: 20000
+  },
+  abiExporter: {
+    path: './abi',
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    only: [
+      'BaseRegistrarImplementation',
+      'DummyOracle',
+      'ENSControllerDeployer',
+      'ENSDeployer',
+      'ENSNFTDeployer',
+      'ENSPublicResolverDeployer',
+      'ENSRegistry',
+      'ENSRegistryDeployer',
+      'ENSUtils',
+      'ERC20Recoverable',
+      'ERC721',
+      'FIFSRegistrar',
+      'LowLevelCallUtils',
+      'Multicall3',
+      'NameEncoder',
+      'OracleDeployer',
+      'PublicResolver',
+      'RegistrarController',
+      'ReverseRegistrar',
+      'RRUtils',
+      'SafeMath',
+      'StablePriceOracle',
+      'StaticMetadataService',
+      'Strings',
+      'StringUtils',
+      'TLDNameWrapper',
+      'UniversalResolver'
+
+    ],
+    format: 'json',
+    spacing: 2
   },
   contractSizer: {
     alphaSort: true,
