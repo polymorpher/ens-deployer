@@ -4,6 +4,8 @@
 This folder holds test suites for deployment of ens contracts and reading writing of dns records.
 It can be enhance further as functionality is rolled out.
 
+We also publish abis in the [./abi](./abi) folder. This is manged using the [hardhat-abi-exporter](https://www.npmjs.com/package/hardhat-abi-exporter) package which has configuration options including the format of the abi's as well as which abi's to publish.
+
 **TODO Items**
 - [ ] Review logic when running all tests to ensure that timeouts do not occur.
 - [ ] Review additional [ens tests](https://github.com/jw-ens-domains/ens-contracts/tree/master/test)
