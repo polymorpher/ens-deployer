@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 
 const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
 console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
@@ -71,6 +71,61 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address
   }) + '\'')
+  // Add some records for local testing (used by go-1ns)
+  if (hre.network.name === 'local') {
+    console.log(`about to registerDomain in network: ${hre.network.name}`)
+    // Note we pass a signer object in and use owner.address in the registration calls
+    // If we want to use another owner besides deployer (account 0) we need to update accounts with key info in hardhat.config.ts
+    const [owner] = await hre.ethers.getSigners()
+    await registerDomain('resolver', owner, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+  }
 }
 f.tags = ['ENSDeployer']
 export default f
+
+async function registerDomain (domain, owner, resolverAddress, registrarControllerAddress) {
+  console.log('in register domain')
+  console.log(`owner: ${JSON.stringify(owner)}`)
+  console.log(`owner.address: ${JSON.stringify(owner.address)}`)
+  const ONE_ETH = ethers.utils.parseEther('1')
+  const duration = ethers.BigNumber.from(365 * 24 * 3600)
+  const secret = '0x0000000000000000000000000000000000000000000000000000000000000000'
+  const callData = []
+  const reverseRecord = false
+  const fuses = ethers.BigNumber.from(0)
+  const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
+  const registrarController = await ethers.getContractAt('RegistrarController', registrarControllerAddress)
+  // const price = await this.priceOracle.price(node, 0, duration)
+  // console.log(`price  : ${JSON.stringify(price.toString())}`)
+  // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
+  const commitment = await registrarController.connect(owner).makeCommitment(
+    domain,
+    owner.address,
+    duration,
+    secret,
+    resolverAddress,
+    callData,
+    reverseRecord,
+    fuses,
+    wrapperExpiry
+  )
+  let tx = await registrarController.connect(owner).commit(commitment)
+  await tx.wait()
+  console.log('Commitment Stored')
+  tx = await registrarController.connect(owner).register(
+    domain,
+    owner.address,
+    duration,
+    secret,
+    resolverAddress,
+    callData,
+    reverseRecord,
+    fuses,
+    wrapperExpiry,
+    {
+      value: ONE_ETH.mul(1100)
+    }
+  )
+  await tx.wait()
+  console.log(`Registered: ${domain}`)
+}
