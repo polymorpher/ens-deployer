@@ -28,6 +28,8 @@ export function displayNode (node) {
 
 export function makeNode (parent, child) {
   const parentHash = namehash.hash(parent)
+  //   const childHash = namehash.hash(child)
+  //   return ethers.utils.keccak256(ethers.utils.concat([parentHash, childHash]))
   const childK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(child))
   return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
 }

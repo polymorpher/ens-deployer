@@ -14,10 +14,11 @@ describe('DNS Tests', function () {
   //   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
-  const DOMAIN = 'test.country'
+  //   const DOMAIN = 'test.country'
+  const DOMAIN = 'test'
   const node = dns.makeNode(TLD, DOMAIN)
-  // Set up the name records for use in all tests
-  const nameDOMAIN = (DOMAIN + '.')
+  // Set up the name records for use in all DNS tests
+  const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
   const nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
   const aName = 'a.' + nameDOMAIN
   const aNameHash = ethers.utils.keccak256(dns.dnsName(aName))

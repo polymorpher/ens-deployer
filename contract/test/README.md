@@ -75,6 +75,23 @@ Following are some useful references
 * [dns-packet](https://www.npmjs.com/package/dns-packet): Good overview of DNS record structures
 * [dns-js](https://www.npmjs.com/package/dns-js): Used for writing DNS records, detailed logic can be found in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js) 
 
+
+## Domain Registration
+
+Example walkthrough for registering "test.country" which will be used next in DNS record mapping
+
+For `test.country` registration
+* `country` = TLD
+* `test`  = Tier2
+* `test.` = registerDOMAIN = DOMAIN + '.' //Name used for registration (does not include the TLD)
+  
+For `test.country` DNS updates
+* `test.country.`  = nameDOMAIN = (DOMAIN + '.' + TLD + '.')
+*  `0xa96719bd5358231beb1a10bef823abf4d37e428fed2993d459f4e67179238f60` = nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
+aNameHash: 0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f
+* `a.test.counry` = aName = 'a.' + nameDOMAIN //name for a.test.country subdomain
+* `0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f` =  aNameHash = ethers.utils.keccak256(dns.dnsName(aName))
+
 ## DNS Record Mapping
 
 For a complete list of DNS record types see [this wikiepedia page](https://en.wikipedia.org/wiki/List_of_DNS_record_types)
