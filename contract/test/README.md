@@ -86,6 +86,12 @@ For `test.country` registration
 * `test.` = registerDOMAIN = DOMAIN + '.' //Name used for registration (does not include the TLD)
   
 For `test.country` DNS updates
+* `0xd8c8e2c8c30a5ef6434277d00289c6626ef4d8757ac559e737a3d51b663ea489` = node =
+    ```
+      const parentHash = namehash.hash('country)
+      const childK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test'))
+      return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
+    ```
 * `test.country.`  = nameDOMAIN = (DOMAIN + '.' + TLD + '.')
 *  `0xa96719bd5358231beb1a10bef823abf4d37e428fed2993d459f4e67179238f60` = nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
 aNameHash: 0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f
