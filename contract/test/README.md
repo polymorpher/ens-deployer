@@ -98,6 +98,16 @@ aNameHash: 0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f
 * `a.test.counry` = aName = 'a.' + nameDOMAIN //name for a.test.country subdomain
 * `0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f` =  aNameHash = ethers.utils.keccak256(dns.dnsName(aName))
 
+
+**Retreiving the owner of the node**
+You can retreive the owner of the node using `await this.ens.owner(node)` where
+* ens: is ENSRegistry.sol
+* node: is calculated for `test.country` as described above
+
+Initially (before registration) this will be the zero address `0x0000000000000000000000000000000000000000`
+
+After alice registers `test.country` the owner address will be set to that of the `TLDNameWrapper.sol` e.g. ( `this.nameWrapper.address` = `0xB7aa4c318000BB9bD16108F81C40D02E48af1C42`)
+
 ## DNS Record Mapping
 
 For a complete list of DNS record types see [this wikiepedia page](https://en.wikipedia.org/wiki/List_of_DNS_record_types)

@@ -15,7 +15,6 @@ describe('DNS Tests', function () {
 
   const TLD = process.env.TLD || 'country'
   const DOMAIN = 'test.country'
-  //   const FQDOMAIN = 'test.country'
   const node = dns.makeNode(TLD, DOMAIN)
   const resolverNode = dns.makeNode(TLD, 'resolver')
   console.log(`resolverNode: ${resolverNode}`)
@@ -33,7 +32,6 @@ describe('DNS Tests', function () {
   const eName = 'e.' + nameDOMAIN
   const eNameHash = ethers.utils.keccak256(dns.dnsName(eName))
   const fName = 'f.' + nameDOMAIN
-  const fNameHash = ethers.utils.keccak256(dns.dnsName(fName))
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
@@ -51,6 +49,8 @@ describe('DNS Tests', function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
     await contracts.prepare(this, []) // get the signers
     await deployAll.deploy(this)
+
+    // console.log(`Owner of test.country before registration: ${await this.ens.owner(node)}`)
 
     // register test.country
     const duration = ethers.BigNumber.from(365 * 24 * 3600)
@@ -119,6 +119,9 @@ describe('DNS Tests', function () {
   // it('PR-DNS-0: check writing and reading of DNS Entries', async function () {
   describe('DNS: Check the reading of initial DNS Entries', async function () {
     it('DNS-001 permits setting name by owner', async function () {
+      // Test Ownership via ENSRegistry
+      expect(await this.ens.owner(node)).to.equal(this.nameWrapper.address)
+      // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
       expect(await this.publicResolver.dnsRecord(node, nameDOMAINHash, Constants.DNSRecordType.SOA)).to.equal('0x' + initSOARec)
