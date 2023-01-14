@@ -14,8 +14,8 @@ describe('DNS Tests', function () {
   //   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
-  //   const DOMAIN = 'test.country'
-  const DOMAIN = 'test'
+  const DOMAIN = 'test.country'
+  //   const FQDOMAIN = 'test.country'
   const node = dns.makeNode(TLD, DOMAIN)
   const resolverNode = dns.makeNode(TLD, 'resolver')
   console.log(`resolverNode: ${resolverNode}`)

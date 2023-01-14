@@ -80,8 +80,9 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     const signers = await hre.ethers.getSigners()
     const alice = signers[4]
     const bob = signers[5]
-    await registerDomain('test', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
-    await registerDomain('resolver', bob, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('test.country', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testa.country', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testb.country', bob, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
   }
 }
 f.tags = ['ENSDeployer']
