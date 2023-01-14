@@ -88,7 +88,7 @@ For `test.country` registration
 For `test.country` DNS updates
 * `0xd8c8e2c8c30a5ef6434277d00289c6626ef4d8757ac559e737a3d51b663ea489` = node =
     ```
-      const parentHash = namehash.hash('country)
+      const parentHash = namehash.hash('country')
       const childK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test'))
       return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
     ```
