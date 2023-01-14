@@ -17,7 +17,8 @@ describe('DNS Tests', function () {
   //   const DOMAIN = 'test.country'
   const DOMAIN = 'test'
   const node = dns.makeNode(TLD, DOMAIN)
-  //   console.log(`node: ${node}`)
+  const resolverNode = dns.makeNode(TLD, 'resolver')
+  console.log(`resolverNode: ${resolverNode}`)
   // Set up the name records for use in all DNS tests
   const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
   const nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))

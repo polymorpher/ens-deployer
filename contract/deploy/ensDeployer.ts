@@ -75,9 +75,13 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   if (hre.network.name === 'local') {
     console.log(`about to registerDomain in network: ${hre.network.name}`)
     // Note we pass a signer object in and use owner.address in the registration calls
-    // If we want to use another owner besides deployer (account 0) we need to update accounts with key info in hardhat.config.ts
-    const [owner] = await hre.ethers.getSigners()
-    await registerDomain('resolver', owner, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    // We have set up local to use 10 accounts from a mnemonic
+    // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
+    const signers = await hre.ethers.getSigners()
+    const alice = signers[4]
+    const bob = signers[5]
+    await registerDomain('test', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('resolver', bob, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
   }
 }
 f.tags = ['ENSDeployer']
