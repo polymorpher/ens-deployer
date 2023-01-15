@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 // import { getTxCost } from '../utilities/contracts'
-// const namehash = require('eth-ens-namehash')
+const namehash = require('eth-ens-namehash')
 
 describe('DNS Tests', function () {
   const ONE_ETH = ethers.utils.parseEther('1')
@@ -14,13 +14,9 @@ describe('DNS Tests', function () {
   //   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
-  const DOMAIN = 'test.country'
-  const node = dns.makeNode(TLD, DOMAIN)
-  const resolverNode = dns.makeNode(TLD, 'resolver')
-  console.log(`resolverNode: ${resolverNode}`)
-  // Set up the name records for use in all DNS tests
-  //   const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
-  const nameDOMAIN = (DOMAIN + '.')
+  const DOMAIN = 'test'
+  const node = namehash.hash(DOMAIN + '.' + TLD)
+  const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
   const nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
   //   console.log(`nameDOMAINHash: ${nameDOMAINHash}`)
   const aName = 'a.' + nameDOMAIN
