@@ -10,7 +10,7 @@ describe('DNS Tests', function () {
 
   //   dns.displayNode('ETH')
   //   dns.displayNode('country')
-  //   dns.displayNode('test.country')
+  dns.displayNode('test.country')
   //   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
@@ -19,10 +19,13 @@ describe('DNS Tests', function () {
   const resolverNode = dns.makeNode(TLD, 'resolver')
   console.log(`resolverNode: ${resolverNode}`)
   // Set up the name records for use in all DNS tests
-  const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
+  //   const nameDOMAIN = (DOMAIN + '.' + TLD + '.')
+  const nameDOMAIN = (DOMAIN + '.')
   const nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
+  //   console.log(`nameDOMAINHash: ${nameDOMAINHash}`)
   const aName = 'a.' + nameDOMAIN
   const aNameHash = ethers.utils.keccak256(dns.dnsName(aName))
+  //   console.log(`aNameHash: ${aNameHash}`)
   const bName = 'b.' + nameDOMAIN
   const bNameHash = ethers.utils.keccak256(dns.dnsName(bName))
   const cName = 'c.' + nameDOMAIN
@@ -120,6 +123,8 @@ describe('DNS Tests', function () {
   describe('DNS: Check the reading of initial DNS Entries', async function () {
     it('DNS-001 permits setting name by owner', async function () {
       // Test Ownership via ENSRegistry
+      //   console.log(`DNS-001: node: ${node}`)
+      //   console.log(`DNS-001: nodeArrayify: ${ethers.utils.arrayify(node)}`)
       expect(await this.ens.owner(node)).to.equal(this.nameWrapper.address)
       // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
