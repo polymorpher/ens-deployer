@@ -143,7 +143,7 @@ contract ENSDeployer is Ownable {
         // get from scripts/computeInterfaceId.ts for  TLDNameWrapper
         publicResolver.setInterface(tld_node, 0x995c8123, address(nameWrapper));
         // get from scripts/computeInterfaceId.ts for RegistrarController
-        publicResolver.setInterface(tld_node, 0xdf7ed181, address(nameWrapper));
+        publicResolver.setInterface(tld_node, 0xdf7ed181, address(registrarController));
     }
 
     function deployUtils() public onlyOwner {
