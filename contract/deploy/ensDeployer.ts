@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers, network } from 'hardhat'
+const namehash = require('eth-ens-namehash')
 
 const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
 console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
@@ -48,7 +49,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log('- universalResolver deployed to:', await ensDeployer.universalResolver())
 
-  const receipt = await ensDeployer.transferOwner(deployer).then(tx => tx.wait())
+  const receipt = await ensDeployer.transferOwner(TLD, deployer).then(tx => tx.wait())
   console.log('tx', receipt.transactionHash)
   const ens = await ethers.getContractAt('ENSRegistry', await ensDeployer.ens())
   console.log('ens owner:', await ens.owner(new Uint8Array(32)))
@@ -71,6 +72,13 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address
   }) + '\'')
+  // Additional configuration data
+  //   const receipt = await ensDeployer.transferOwner(deployer).then(tx => tx.wait())
+  //   console.log('tx', receipt.transactionHash)
+  //   await ens.Resolver(namehash.hash('resolver'))
+  console.log(`namehash.hash('resolver'): ${namehash.hash('resolver')}`)
+  console.log(`resolver.resolver: ${await ens.resolver(namehash.hash('resolver'))} `)
+
   // Add some records for local testing (used by go-1ns)
   if (hre.network.name === 'local') {
     console.log(`about to registerDomain in network: ${hre.network.name}`)
