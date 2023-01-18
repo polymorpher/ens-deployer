@@ -122,8 +122,11 @@ describe('DNS Tests', function () {
       console.log(`DNS-001: node: ${node}`)
       console.log(`DNS-001: nodeArrayify: ${ethers.utils.arrayify(node)}`)
       expect(await this.ens.owner(node)).to.equal(this.nameWrapper.address)
-      //   console.log(`testK256Bytes: ${ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')))}`)
       expect(await this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')))))).to.equal(this.nameWrapper.address)
+      const testxyzNode = namehash.hash('textxyz' + '.' + TLD)
+      // test an unregistered node
+      expect(await this.ens.owner(testxyzNode)).to.equal(Constants.ZERO_ADDRESS)
+      await expect(this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.be.reverted
       // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
