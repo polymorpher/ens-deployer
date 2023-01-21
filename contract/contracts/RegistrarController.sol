@@ -82,7 +82,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     }
 
     function valid(string memory name) public pure returns (bool) {
-        return name.strlen() >= 3;
+        return name.strlen() >= 1;
     }
 
     function available(string memory name) public view override returns (bool) {
@@ -154,7 +154,12 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         _renew(name, duration, 0, 0);
     }
 
-    function renewWithFuses(string calldata name, uint256 duration, uint32 fuses, uint64 wrapperExpiry) external payable {
+    function renewWithFuses(
+        string calldata name,
+        uint256 duration,
+        uint32 fuses,
+        uint64 wrapperExpiry
+    ) external payable {
         bytes32 labelhash = keccak256(bytes(name));
         bytes32 nodehash = keccak256(abi.encodePacked(baseNode, labelhash));
         if (!nameWrapper.isTokenOwnerOrApproved(nodehash, msg.sender)) {
@@ -163,7 +168,12 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         _renew(name, duration, fuses, wrapperExpiry);
     }
 
-    function _renew(string calldata name, uint256 duration, uint32 fuses, uint64 wrapperExpiry) internal {
+    function _renew(
+        string calldata name,
+        uint256 duration,
+        uint32 fuses,
+        uint64 wrapperExpiry
+    ) internal {
         bytes32 labelhash = keccak256(bytes(name));
         uint256 tokenId = uint256(labelhash);
         IPriceOracle.Price memory price = rentPrice(name, duration);
@@ -190,7 +200,11 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     /* Internal functions */
 
-    function _consumeCommitment(string memory name, uint256 duration, bytes32 commitment) internal {
+    function _consumeCommitment(
+        string memory name,
+        uint256 duration,
+        bytes32 commitment
+    ) internal {
         // Require an old enough commitment.
         if (commitments[commitment] + minCommitmentAge > block.timestamp) {
             revert CommitmentTooNew(commitment);
@@ -211,14 +225,22 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         }
     }
 
-    function _setRecords(address resolverAddress, bytes32 label, bytes[] calldata data) internal {
+    function _setRecords(
+        address resolverAddress,
+        bytes32 label,
+        bytes[] calldata data
+    ) internal {
         // use hardcoded .eth namehash
         bytes32 nodehash = keccak256(abi.encodePacked(baseNode, label));
         Resolver resolver = Resolver(resolverAddress);
         resolver.multicallWithNodeCheck(nodehash, data);
     }
 
-    function _setReverseRecord(string memory name, address resolver, address owner) internal {
+    function _setReverseRecord(
+        string memory name,
+        address resolver,
+        address owner
+    ) internal {
         reverseRegistrar.setNameForAddr(msg.sender, owner, resolver, string.concat(name, ".", baseExtension));
     }
 }
