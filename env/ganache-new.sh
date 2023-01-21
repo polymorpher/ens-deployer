@@ -5,4 +5,4 @@
 
 rm -rf db
 # ganache --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk"
-ganache -b 2 --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk" -e 100000
+ganache -b 2 --server.ws --database.dbPath "./db" -m "test test test test test test test test test test test junk" -e 10000000
