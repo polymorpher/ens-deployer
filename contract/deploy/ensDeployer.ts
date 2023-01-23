@@ -1,5 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers, network } from 'hardhat'
+import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
+import { PublicResolver } from '../typechain'
 const namehash = require('eth-ens-namehash')
 
 const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
@@ -88,15 +90,15 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     const signers = await hre.ethers.getSigners()
     const alice = signers[4]
     const bob = signers[5]
-    await registerDomain('test', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
-    await registerDomain('testa', alice, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
-    await registerDomain('testb', bob, await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('test', alice, '128.0.0.1', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testa', alice, '128.0.0.2', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testb', bob, '128.0.0.3', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
   }
 }
 f.tags = ['ENSDeployer']
 export default f
 
-async function registerDomain (domain, owner, resolverAddress, registrarControllerAddress) {
+async function registerDomain (domain, owner, ip, resolverAddress, registrarControllerAddress) {
   console.log('in register domain')
   console.log(`owner: ${JSON.stringify(owner)}`)
   console.log(`owner.address: ${JSON.stringify(owner.address)}`)
@@ -141,4 +143,48 @@ async function registerDomain (domain, owner, resolverAddress, registrarControll
   )
   await tx.wait()
   console.log(`Registered: ${domain}`)
+
+  // Also set a default A record
+  const publicResolver = await ethers.getContractAt('PublicResolver', resolverAddress)
+  const TLD = process.env.TLD || 'country'
+  const node = namehash.hash(domain + '.' + TLD)
+  const aName = 'a.' + domain
+  const initRec = '0x' + encodeARecord(aName, ip)
+  // Set Initial DNS entries
+  tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
+  await tx.wait()
+  // Set intial zonehash
+  tx = await publicResolver.connect(owner).setZonehash(
+    node,
+    '0x0000000000000000000000000000000000000000000000000000000000000001'
+  )
+  await tx.wait()
+  console.log(`Created a record for: ${aName} ip address: ${ip}`)
+}
+
+export function encodeARecord (recName, recAddress) {
+  // Sample Mapping
+  // a.country. 3600 IN A 1.2.3.4
+  /*
+      name: a.test.country
+      type: A
+      class: IN
+      ttl: 3600
+      address: 1.2.3.4
+    */
+  // returns 0161047465737407636f756e747279000001000100000e10000401020304
+
+  // a empty address is used to remove existing records
+  let rec = {}
+  rec = {
+    name: recName,
+    type: DNSRecord.Type.A,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    address: recAddress
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  //   console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
 }
