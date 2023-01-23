@@ -148,8 +148,10 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const publicResolver = await ethers.getContractAt('PublicResolver', resolverAddress)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
+  const initRecDomain = encodeARecord(domain, ip)
   const aName = 'a.' + domain
-  const initRec = '0x' + encodeARecord(aName, ip)
+  const initRecA = encodeARecord(aName, ip)
+  const initRec = '0x' + initRecDomain + initRecA
   // Set Initial DNS entries
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
   await tx.wait()
@@ -159,7 +161,7 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
     '0x0000000000000000000000000000000000000000000000000000000000000001'
   )
   await tx.wait()
-  console.log(`Created a record for: ${aName} ip address: ${ip}`)
+  console.log(`Created records for: ${domain} and ${aName} same ip address: ${ip}`)
 }
 
 export function encodeARecord (recName, recAddress) {
