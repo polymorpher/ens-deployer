@@ -151,7 +151,12 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const initRecDomain = encodeARecord(domain, ip)
   const aName = 'a.' + domain
   const initRecA = encodeARecord(aName, ip)
-  const initRec = '0x' + initRecDomain + initRecA
+  //   const initRec = '0x' + initRecDomain + initRecA
+  const FQDN = domain + '.' + TLD + '.'
+  const initRecDomainFQDN = encodeARecord(FQDN, ip)
+  const aNameFQDN = 'a.' + FQDN
+  const initRecAFQDN = encodeARecord(aNameFQDN, ip)
+  const initRec = '0x' + initRecDomain + initRecA + initRecDomainFQDN + initRecAFQDN
   // Set Initial DNS entries
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
   await tx.wait()
