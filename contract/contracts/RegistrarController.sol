@@ -37,7 +37,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     uint64 private constant MAX_EXPIRY = type(uint64).max;
     BaseRegistrarImplementation immutable base;
-    IPriceOracle public immutable prices;
+    IPriceOracle public prices;
     uint256 public immutable minCommitmentAge;
     uint256 public immutable maxCommitmentAge;
     ReverseRegistrar public immutable reverseRegistrar;
@@ -47,6 +47,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
 
     event NameRegistered(string name, bytes32 indexed label, address indexed owner, uint256 baseCost, uint256 premium, uint256 expires);
     event NameRenewed(string name, bytes32 indexed label, uint256 cost, uint256 expires);
+    event PriceOracleChanged(address oldAddress, address newAddress);
 
     constructor(
         BaseRegistrarImplementation _base,
@@ -79,6 +80,13 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     function rentPrice(string memory name, uint256 duration) public view override returns (IPriceOracle.Price memory price) {
         bytes32 label = keccak256(bytes(name));
         price = prices.price(name, base.nameExpires(uint256(label)), duration);
+    }
+
+    // @polymorpher: added 2022-02-01, since we are still experimenting with pricing
+    function setPrices(IPriceOracle _prices) public onlyOwner(){
+        address oldAddress = address(prices);
+        prices = _prices;
+        emit PriceOracleChanged(oldAddress, address(prices));
     }
 
     function valid(string memory name) public pure returns (bool) {
