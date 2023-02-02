@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC-BY-NC-4.0
 pragma solidity ~0.8.17;
 
 import {ERC1155Fuse, IERC165, OperationProhibited} from "@ensdomains/ens-contracts/contracts/wrapper/ERC1155Fuse.sol";
