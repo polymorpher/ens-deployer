@@ -9,9 +9,9 @@ contract SimpleAssetPriceOracle is AccessControl {
     uint256 value;
 
     constructor(uint256 _value) public {
-        set(_value);
         _setupRole(ROLE_FEEDER, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        set(_value);
     }
 
     function set(uint256 _value) public onlyRole(ROLE_FEEDER) {
