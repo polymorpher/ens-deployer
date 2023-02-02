@@ -15,9 +15,9 @@ function computeInterfaceId (iface: Interface) {
 }
 
 async function main () {
-  const contract = await ethers.getContractFactory('NameWrapper')
+  const contract = await ethers.getContractFactory('TLDNameWrapper')
   const interfaceId = computeInterfaceId(contract.interface)
-  console.log('NameWrapper', interfaceId)
+  console.log('TLDNameWrapper', interfaceId)
   const interfaceId2 = computeInterfaceId(new Interface([
     'function available(string) returns (bool)',
     'function commit(bytes32)',

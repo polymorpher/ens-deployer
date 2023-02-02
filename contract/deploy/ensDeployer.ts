@@ -1,5 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
+import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
+import { PublicResolver } from '../typechain'
+const namehash = require('eth-ens-namehash')
 
 const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET_NANO_USD || '100000000000'
 const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
@@ -60,7 +63,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log('- universalResolver deployed to:', await ensDeployer.universalResolver())
 
-  const receipt = await ensDeployer.transferOwner(deployer).then(tx => tx.wait())
+  const receipt = await ensDeployer.transferOwner(TLD, deployer).then(tx => tx.wait())
   console.log('tx', receipt.transactionHash)
   const ens = await ethers.getContractAt('ENSRegistry', await ensDeployer.ens())
   console.log('ens owner:', await ens.owner(new Uint8Array(32)))
@@ -83,6 +86,124 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address
   }) + '\'')
+  // Additional configuration data
+  //   const receipt = await ensDeployer.transferOwner(deployer).then(tx => tx.wait())
+  //   console.log('tx', receipt.transactionHash)
+  //   await ens.Resolver(namehash.hash('resolver'))
+  console.log(`namehash.hash('resolver'): ${namehash.hash('resolver')}`)
+  console.log(`resolver.resolver: ${await ens.resolver(namehash.hash('resolver'))} `)
+
+  // Add some records for local testing (used by go-1ns)
+  if (hre.network.name === 'local') {
+    console.log(`about to registerDomain in network: ${hre.network.name}`)
+    // Note we pass a signer object in and use owner.address in the registration calls
+    // We have set up local to use 10 accounts from a mnemonic
+    // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
+    const signers = await hre.ethers.getSigners()
+    const alice = signers[4]
+    const bob = signers[5]
+    await registerDomain('test', alice, '128.0.0.1', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testa', alice, '128.0.0.2', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+    await registerDomain('testb', bob, '128.0.0.3', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
+  }
 }
 f.tags = ['ENSDeployer']
 export default f
+
+async function registerDomain (domain, owner, ip, resolverAddress, registrarControllerAddress) {
+  console.log('in register domain')
+  console.log(`owner: ${JSON.stringify(owner)}`)
+  console.log(`owner.address: ${JSON.stringify(owner.address)}`)
+  const ONE_ETH = ethers.utils.parseEther('1')
+  const duration = ethers.BigNumber.from(365 * 24 * 3600)
+  const secret = '0x0000000000000000000000000000000000000000000000000000000000000000'
+  const callData = []
+  const reverseRecord = false
+  const fuses = ethers.BigNumber.from(0)
+  const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
+  const registrarController = await ethers.getContractAt('RegistrarController', registrarControllerAddress)
+  // const price = await this.priceOracle.price(node, 0, duration)
+  // console.log(`price  : ${JSON.stringify(price.toString())}`)
+  // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
+  const commitment = await registrarController.connect(owner).makeCommitment(
+    domain,
+    owner.address,
+    duration,
+    secret,
+    resolverAddress,
+    callData,
+    reverseRecord,
+    fuses,
+    wrapperExpiry
+  )
+  let tx = await registrarController.connect(owner).commit(commitment)
+  await tx.wait()
+  console.log('Commitment Stored')
+  tx = await registrarController.connect(owner).register(
+    domain,
+    owner.address,
+    duration,
+    secret,
+    resolverAddress,
+    callData,
+    reverseRecord,
+    fuses,
+    wrapperExpiry,
+    {
+      value: ONE_ETH.mul(1100)
+    }
+  )
+  await tx.wait()
+  console.log(`Registered: ${domain}`)
+
+  // Also set a default A record
+  const publicResolver = await ethers.getContractAt('PublicResolver', resolverAddress)
+  const TLD = process.env.TLD || 'country'
+  const node = namehash.hash(domain + '.' + TLD)
+  const initRecDomain = encodeARecord(domain, ip)
+  const aName = 'a.' + domain
+  const initRecA = encodeARecord(aName, ip)
+  //   const initRec = '0x' + initRecDomain + initRecA
+  const FQDN = domain + '.' + TLD + '.'
+  const initRecDomainFQDN = encodeARecord(FQDN, ip)
+  const aNameFQDN = 'a.' + FQDN
+  const initRecAFQDN = encodeARecord(aNameFQDN, ip)
+  const initRec = '0x' + initRecDomain + initRecA + initRecDomainFQDN + initRecAFQDN
+  // Set Initial DNS entries
+  tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
+  await tx.wait()
+  // Set intial zonehash
+  tx = await publicResolver.connect(owner).setZonehash(
+    node,
+    '0x0000000000000000000000000000000000000000000000000000000000000001'
+  )
+  await tx.wait()
+  console.log(`Created records for: ${domain} and ${aName} same ip address: ${ip}`)
+}
+
+export function encodeARecord (recName, recAddress) {
+  // Sample Mapping
+  // a.country. 3600 IN A 1.2.3.4
+  /*
+      name: a.test.country
+      type: A
+      class: IN
+      ttl: 3600
+      address: 1.2.3.4
+    */
+  // returns 0161047465737407636f756e747279000001000100000e10000401020304
+
+  // a empty address is used to remove existing records
+  let rec = {}
+  rec = {
+    name: recName,
+    type: DNSRecord.Type.A,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    address: recAddress
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  //   console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
+}
