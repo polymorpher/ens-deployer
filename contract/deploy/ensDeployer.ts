@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
-import { values } from 'lodash'
 
 const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET_NANO_USD || '100000000000'
 const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
