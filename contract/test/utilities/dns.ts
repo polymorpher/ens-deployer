@@ -85,7 +85,12 @@ export function encodeARecord (recName, recAddress) {
   }
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`recordText: ${b.toString('hex')}`)
+  //   console.log(`recName: ${recName}`)
+  //   console.log(`recAddress: ${recAddress}`)
+  console.log(`rec: ${JSON.stringify(rec)}`)
+  console.log(`b.json: ${JSON.stringify(b)}`)
+  console.log(`b.string: ${b.toString()}`)
+  console.log(`recordText: ${b.toString('hex')}`)
   return b.toString('hex')
 }
 
@@ -141,6 +146,6 @@ export function encodeTXTRecord (recName, recText) {
   }
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
-  console.log(`recordText: ${b.toString('hex')}`)
+  // console.log(`recordText: ${b.toString('hex')}`)
   return b.toString('hex')
 }

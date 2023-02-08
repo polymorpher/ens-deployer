@@ -89,6 +89,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
     const signers = await hre.ethers.getSigners()
     const alice = signers[4]
+    console.log(`alice.address: ${alice.address}`)
     const bob = signers[5]
     await registerDomain('test', alice, '128.0.0.1', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
     await registerDomain('testa', alice, '128.0.0.2', await ensDeployer.publicResolver(), await ensDeployer.registrarController())
@@ -99,9 +100,9 @@ f.tags = ['ENSDeployer']
 export default f
 
 async function registerDomain (domain, owner, ip, resolverAddress, registrarControllerAddress) {
-  console.log('in register domain')
-  console.log(`owner: ${JSON.stringify(owner)}`)
-  console.log(`owner.address: ${JSON.stringify(owner.address)}`)
+//   console.log('in register domain')
+//   console.log(`owner: ${JSON.stringify(owner)}`)
+//   console.log(`owner.address: ${JSON.stringify(owner.address)}`)
   const ONE_ETH = ethers.utils.parseEther('1')
   const duration = ethers.BigNumber.from(365 * 24 * 3600)
   const secret = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -148,16 +149,20 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const publicResolver = await ethers.getContractAt('PublicResolver', resolverAddress)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
-  const initRecDomain = encodeARecord(domain, ip)
-  const aName = 'a.' + domain
-  const initRecA = encodeARecord(aName, ip)
+  console.log('==================')
+  //   const initRecDomain = encodeARecord(domain, ip)
+  //   const aName = 'a.' + domain
+  //   const initRecA = encodeARecord(aName, ip)
   //   const initRec = '0x' + initRecDomain + initRecA
   const FQDN = domain + '.' + TLD + '.'
-  const initRecDomainFQDN = encodeARecord(FQDN, ip)
+  //   const initRecDomainFQDN = encodeARecord(FQDN, ip)
   const aNameFQDN = 'a.' + FQDN
   const initRecAFQDN = encodeARecord(aNameFQDN, ip)
-  const initRec = '0x' + initRecDomain + initRecA + initRecDomainFQDN + initRecAFQDN
+  const initRec = '0x' + initRecAFQDN
+  //   const initRec = '0x' + initRecDomain + initRecA + initRecDomainFQDN + initRecAFQDN
   // Set Initial DNS entries
+  console.log(`node: ${node}`)
+  console.log(`initRec: ${initRec}`)
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
   await tx.wait()
   // Set intial zonehash
@@ -166,14 +171,15 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
     '0x0000000000000000000000000000000000000000000000000000000000000001'
   )
   await tx.wait()
-  console.log(`Created records for: ${domain} and ${aName} same ip address: ${ip}`)
+  console.log(`Created records for: ${domain + '.' + TLD} and ${aNameFQDN} same ip address: ${ip}`)
+  console.log('==================')
 }
 
 export function encodeARecord (recName, recAddress) {
   // Sample Mapping
-  // a.country. 3600 IN A 1.2.3.4
+  // a.test.country. 3600 IN A 1.2.3.4
   /*
-      name: a.test.country
+      name: a.test.country.
       type: A
       class: IN
       ttl: 3600
@@ -192,6 +198,7 @@ export function encodeARecord (recName, recAddress) {
   }
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`recordText: ${b.toString('hex')}`)
+  console.log(`b.json: ${JSON.stringify(b)}`)
+  console.log(`recordText: ${b.toString('hex')}`)
   return b.toString('hex')
 }

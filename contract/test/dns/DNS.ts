@@ -10,7 +10,7 @@ describe('DNS Tests', function () {
 
   //   dns.displayNode('ETH')
   //   dns.displayNode('country')
-  dns.displayNode('test.country')
+  //   dns.displayNode('test.country')
   //   dns.displayNode('test')
 
   const TLD = process.env.TLD || 'country'
@@ -35,6 +35,7 @@ describe('DNS Tests', function () {
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
   const initARec = dns.encodeARecord(aName, '1.2.3.4')
+
   // b.test.country. 3600 IN A 2.3.4.5
   const initB1Rec = dns.encodeARecord(bName, '2.3.4.5')
   // b.test.country. 3600 IN A 3.4.5.6
@@ -90,6 +91,16 @@ describe('DNS Tests', function () {
     )
     await tx.wait()
     // Set Initial DNS entries
+    console.log('==========')
+    console.log('Initializaing a.test.country')
+    console.log('node: test.country')
+    console.log(`nodeHash: ${node}`)
+    console.log(`0x + initARec: ${'0x' + initARec}`)
+    tx = await this.publicResolver.connect(this.alice).setDNSRecords(node, '0x' + initARec)
+    await tx.wait()
+    console.log('==========')
+    // console.log(`nodeBefore: ${node}`)
+    // console.log(`initRec for a only: ${'0x' + initARec}`)
     tx = await this.publicResolver.connect(this.alice).setDNSRecords(node, initRec)
     await tx.wait()
     // Set intial zonehash
@@ -121,12 +132,16 @@ describe('DNS Tests', function () {
       // Test Ownership via ENSRegistry
       console.log(`DNS-001: node: ${node}`)
       console.log(`DNS-001: nodeArrayify: ${ethers.utils.arrayify(node)}`)
+      console.log('ETH_NODE: 0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae')
+      expect('0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae').to.equal(namehash.hash('eth'))
+      expect(await this.nameWrapper.TLD_NODE()).to.equal(namehash.hash('country'))
       expect(await this.ens.owner(node)).to.equal(this.nameWrapper.address)
       expect(await this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')))))).to.equal(this.nameWrapper.address)
       const testxyzNode = namehash.hash('textxyz' + '.' + TLD)
       // test an unregistered node
       expect(await this.ens.owner(testxyzNode)).to.equal(Constants.ZERO_ADDRESS)
-      await expect(this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.be.reverted
+      //   await expect(this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.be.reverted
+      expect(await this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.equal(Constants.ZERO_ADDRESS)
       // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
