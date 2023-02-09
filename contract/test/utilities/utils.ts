@@ -1,6 +1,5 @@
 import { toAscii } from 'idna-uts46'
-// import { Keccak } from 'keccak'
-const createKeccakHash = require('keccak')
+import { createKeccakHash } from 'keccak'
 
 export const utils = {
   hexView: (bytes) => {
