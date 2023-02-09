@@ -4,7 +4,6 @@ import * as contracts from './contracts'
 import * as deployAll from './deployAll'
 import * as dns from './dns'
 import * as ens from './ens'
-import * as exceptions from './exceptions'
 import * as reverse from './reverse'
 import * as utils from './utils'
 
@@ -14,7 +13,6 @@ export {
   deployAll,
   dns,
   ens,
-  exceptions,
   reverse,
   utils
 }
