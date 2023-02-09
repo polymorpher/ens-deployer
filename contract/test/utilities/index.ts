@@ -16,15 +16,3 @@ export {
   reverse,
   utils
 }
-
-// // export const Constants
-// module.exports = {
-//   Constants
-
-// //   exceptions: require('./exceptions.ts'),
-// //   evm: require('./evm.ts'),
-// //   dns: require('./dns.ts'),
-// //   ens: require('./ens.ts'),
-// //   reverse: require('./reverse.ts'),
-// //   contracts: require('./contracts.ts')
-// }
