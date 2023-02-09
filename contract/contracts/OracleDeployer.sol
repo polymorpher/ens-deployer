@@ -1,13 +1,15 @@
-import "@ensdomains/ens-contracts/contracts/ethregistrar/StablePriceOracle.sol";
-import "@ensdomains/ens-contracts/contracts/ethregistrar/DummyOracle.sol";
+//SPDX-License-Identifier: CC-BY-NC-4.0
+import "./LengthBasedPriceOracle.sol";
+import "./SimpleAssetPriceOracle.sol";
 
-// TODO: make a real one later
+// TODO: make a better one later
+
 contract OracleDeployer is Ownable {
     AggregatorInterface public usdOracle;
     IPriceOracle public oracle;
 
-    constructor(int256 tokenPriceUSD, uint256[] memory rents) {
-        usdOracle = AggregatorInterface(address(new DummyOracle(tokenPriceUSD)));
-        oracle = new StablePriceOracle(usdOracle, rents);
+    constructor(uint256 _assetPriceNanoUSD, uint256 _baseUnitPrice, uint8[] memory _lengths, uint256[] memory _premiumUnitPrices) {
+        usdOracle = AggregatorInterface(address(new SimpleAssetPriceOracle(_assetPriceNanoUSD)));
+        oracle = new LengthBasedPriceOracle(usdOracle, _baseUnitPrice, _lengths, _premiumUnitPrices);
     }
 }

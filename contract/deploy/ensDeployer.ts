@@ -4,13 +4,25 @@ import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
 import { PublicResolver } from '../typechain'
 const namehash = require('eth-ens-namehash')
 
-const ORACLE_UNIT_PRICE = parseInt(process.env.ORACLE_PRICE_PER_SECOND_IN_WEIS || '3')
-console.log('ORACLE_UNIT_PRICE', ORACLE_UNIT_PRICE)
+const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET_NANO_USD || '100000000000'
+const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
+const ORACLE_PRICE_PREMIUM = JSON.parse(process.env.ORACLE_PRICE_PREMIUM || '{}')
+
+console.log({ ORACLE_PRICE_NATIVE_ASSET_NANO_USD, ORACLE_PRICE_BASE_UNIT_PRICE, ORACLE_PRICE_PREMIUM })
+
 const f = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
   const TLD = process.env.TLD || 'country'
-  const OracleDeployer = await deploy('OracleDeployer', { from: deployer, args: [1, [ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE, ORACLE_UNIT_PRICE]] })
+  const OracleDeployer = await deploy('OracleDeployer', {
+    from: deployer,
+    args: [
+      ORACLE_PRICE_NATIVE_ASSET_NANO_USD,
+      ORACLE_PRICE_BASE_UNIT_PRICE,
+      Object.keys(ORACLE_PRICE_PREMIUM),
+      Object.values(ORACLE_PRICE_PREMIUM)
+    ]
+  })
   const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracle = await oracleDeployer.oracle()
   console.log('oracleDeployer:', oracleDeployer.address)
