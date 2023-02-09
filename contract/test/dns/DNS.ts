@@ -53,7 +53,7 @@ describe('DNS Tests', function () {
     // console.log(`Owner of test.country before registration: ${await this.ens.owner(node)}`)
 
     // register test.country
-    const duration = ethers.BigNumber.from(365 * 24 * 3600)
+    const duration = ethers.BigNumber.from(30 * 24 * 3600)
     const secret = Constants.EMPTY_BYTES32
     const callData = []
     const reverseRecord = false

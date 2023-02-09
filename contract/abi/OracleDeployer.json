@@ -2,13 +2,23 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "tokenPriceUSD",
-        "type": "int256"
+        "internalType": "uint256",
+        "name": "_assetPriceNanoUSD",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_baseUnitPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8[]",
+        "name": "_lengths",
+        "type": "uint8[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "rents",
+        "name": "_premiumUnitPrices",
         "type": "uint256[]"
       }
     ],

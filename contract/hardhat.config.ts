@@ -29,7 +29,8 @@ const hardhatUserconfig: HardhatUserConfig = {
   networks: {
     hardhat: {
       accounts: {
-        count: 10
+        count: 10,
+        accountsBalance: '1000000000000000000000000'
       },
       mining: {
         auto: true

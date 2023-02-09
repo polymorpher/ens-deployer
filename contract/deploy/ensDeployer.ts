@@ -116,7 +116,7 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
 //   console.log(`owner: ${JSON.stringify(owner)}`)
 //   console.log(`owner.address: ${JSON.stringify(owner.address)}`)
   const ONE_ETH = ethers.utils.parseEther('1')
-  const duration = ethers.BigNumber.from(365 * 24 * 3600)
+  const duration = ethers.BigNumber.from(30 * 24 * 3600)
   const secret = '0x0000000000000000000000000000000000000000000000000000000000000000'
   const callData = []
   const reverseRecord = false
