@@ -180,10 +180,9 @@ contract ENSDeployer is Ownable {
         setOwnership(tld);
     }
 
-    function transferOwner(string memory tld, address dest) external onlyOwner {
+    function transferOwner(address dest) external onlyOwner {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, dest);
         ens.setSubnodeOwner(bytes32(0), ENSUtils.RESOLVER_LABEL, dest);
-        ens.setSubnodeOwner(bytes32(0), ENSUtils.namehash(keccak256(abi.encodePacked(tld))), dest);
         ens.setOwner(bytes32(0), dest);
         nameWrapper.transferOwnership(dest);
         baseRegistrar.transferOwnership(dest);
@@ -194,13 +193,17 @@ contract ENSDeployer is Ownable {
 
     // @polymorpher (Feb 1, 2023): added in case we have some money stuck in this contract due to misconfiguration
     function withdraw() external onlyOwner {
-        (bool success,) = owner().call{value: address(this).balance}("");
+        (bool success, ) = owner().call{value: address(this).balance}("");
         require(success, "withdraw failed");
     }
 
     // @polymorpher (Feb 1, 2023): added in case some deployed contract is misconfigured to allow call from this contract only (e.g. as owner)
-    function call(address dest, uint256 value, bytes memory data) external onlyOwner {
-        (bool success,) = dest.call{value: value}(data);
+    function call(
+        address dest,
+        uint256 value,
+        bytes memory data
+    ) external onlyOwner {
+        (bool success, ) = dest.call{value: value}(data);
         require(success, "call failed");
     }
 }
