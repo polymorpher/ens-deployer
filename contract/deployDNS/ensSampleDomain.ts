@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ethers, network } from 'hardhat'
-import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
-import { PublicResolver } from '../typechain'
+import { ethers } from 'hardhat'
+import { dns } from '../lib'
 const namehash = require('eth-ens-namehash')
 
 const f = async function (hre: HardhatRuntimeEnvironment) {
@@ -11,7 +10,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     // Note we pass a signer object in and use owner.address in the registration calls
     // We have set up local to use 10 accounts from a mnemonic
     // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
-    const signers = await hre.ethers.getSigners()
+    const signers = await ethers.getSigners()
     const alice = signers[4]
     console.log(`alice.address: ${alice.address}`)
     const bob = signers[5]
@@ -24,7 +23,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     const FQTLD = TLD + '.'
     const wildFQTLD = '*.' + FQTLD
     const defaultIP = process.env.DEFAULT_IP || '34.120.199.241'
-    const initRecAFQDN = encodeARecord(wildFQTLD, defaultIP)
+    const initRecAFQDN = dns.encodeARecord(wildFQTLD, defaultIP)
     const initRec = '0x' + initRecAFQDN
     const tx = await publicResolver.connect(deployer).setDNSRecords(TLDnode, initRec)
     await tx.wait()
@@ -89,9 +88,10 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
+  const initRecFQDN = dns.encodeARecord(FQDN, ip)
   const aNameFQDN = 'a.' + FQDN
-  const initRecAFQDN = encodeARecord(aNameFQDN, ip)
-  const initRec = '0x' + initRecAFQDN
+  const initRecAFQDN = dns.encodeARecord(aNameFQDN, ip)
+  const initRec = '0x' + initRecFQDN + initRecAFQDN
   // Set Initial DNS entries
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
   await tx.wait()
@@ -102,32 +102,4 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   )
   await tx.wait()
   console.log(`Created records for: ${domain + '.' + TLD} and ${aNameFQDN} same ip address: ${ip}`)
-}
-
-export function encodeARecord (recName, recAddress) {
-  // Sample Mapping
-  // a.test.country. 3600 IN A 1.2.3.4
-  /*
-      name: a.test.country.
-      type: A
-      class: IN
-      ttl: 3600
-      address: 1.2.3.4
-    */
-  // returns 0161047465737407636f756e747279000001000100000e10000401020304
-
-  // a empty address is used to remove existing records
-  let rec = {}
-  rec = {
-    name: recName,
-    type: DNSRecord.Type.A,
-    class: DNSRecord.Class.IN,
-    ttl: 3600,
-    address: recAddress
-  }
-  const bw = new BufferWriter()
-  const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`b.json: ${JSON.stringify(b)}`)
-  //   console.log(`recordText: ${b.toString('hex')}`)
-  return b.toString('hex')
 }

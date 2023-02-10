@@ -1,26 +1,26 @@
-import { packet, encode, decode } from 'dns-packet'
-import { ethers } from 'hardhat'
-import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
-import { Constants, utils } from '../utilities'
+import { packet } from 'dns-packet'
+import { ethers } from 'ethers'
+import { BufferWriter, DNSRecord } from 'dns-js'
+import { utils } from './utils'
 // import { namehash } from 'eth-ens-namehash'
 const namehash = require('eth-ens-namehash')
 
-export function hexEncodeName (name) {
+const hexEncodeName = (name) => {
   return '0x' + packet.name.encode(name).toString('hex')
 }
 
-export function hexEncodeTXT (keys) {
+const hexEncodeTXT = (keys) => {
   return '0x' + packet.answer.encode(keys).toString('hex')
 }
 
-export function displayNode (node) {
+const displayNode = (node) => {
   console.log(`node                : ${node}`)
   console.log(`node.dns.namehash   : ${namehash.hash(node)}`)
   console.log(`node.label.k256.b   : ${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node))}`)
   console.log(`node.label.k256.bB  : ${ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node)))}`)
-  console.log(`node.utils.namehash : ${utils.utils.namehash(node)}`)
-  console.log(`node.utils.namehashS: ${utils.utils.bytesToHexString(utils.utils.namehash(node))}`)
-  console.log(`node.utils.namehashSB: ${ethers.utils.arrayify(utils.utils.bytesToHexString(utils.utils.namehash(node)))}`)
+  console.log(`node.utils.namehash : ${utils.namehash(node)}`)
+  console.log(`node.utils.namehashS: ${utils.bytesToHexString(utils.namehash(node))}`)
+  console.log(`node.utils.namehashSB: ${ethers.utils.arrayify(utils.bytesToHexString(utils.namehash(node)))}`)
   console.log(`node.toUtfBytes     : ${ethers.utils.toUtf8Bytes(node)}`)
   console.log(`node.dnsName        : ${dnsName(node)}`)
   // TLD_NODE = keccak256(bytes.concat(bytes32(0), keccak256(bytes(_tld))));
@@ -28,7 +28,7 @@ export function displayNode (node) {
   //   console.log(`node.keccak256: ${ethers.utils.keccak256(node)}`)
 }
 
-export function makeNode (parent, child) {
+const makeNode = (parent, child) => {
   const parentHash = namehash.hash(parent)
   //   const childHash = namehash.hash(child)
   //   return ethers.utils.keccak256(ethers.utils.concat([parentHash, childHash]))
@@ -36,7 +36,7 @@ export function makeNode (parent, child) {
   return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
 }
 
-export function dnsName (name) {
+const dnsName = (name) => {
   // strip leading and trailing .
   const n = name.replace(/^\.|\.$/gm, '')
 
@@ -62,7 +62,7 @@ export function dnsName (name) {
   )
 }
 
-export function encodeARecord (recName, recAddress) {
+const encodeARecord = (recName, recAddress) => {
   // Sample Mapping
   // a.country. 3600 IN A 1.2.3.4
   /*
@@ -94,7 +94,7 @@ export function encodeARecord (recName, recAddress) {
   return b.toString('hex')
 }
 
-export function encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
+const encodeSRecord = (recName, primary, admin, serial, refresh, retry, expiration, minimum) => {
   // Sample Mapping
   // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   /*
@@ -130,7 +130,7 @@ export function encodeSRecord (recName, primary, admin, serial, refresh, retry, 
   return b.toString('hex')
 }
 
-export function encodeTXTRecord (recName, recText) {
+const encodeTXTRecord = (recName, recText) => {
   // Sample Mapping
   // test.country. SampleText
   /*
@@ -148,4 +148,16 @@ export function encodeTXTRecord (recName, recText) {
   const b = DNSRecord.write(bw, rec).dump()
   // console.log(`recordText: ${b.toString('hex')}`)
   return b.toString('hex')
+}
+
+export {
+// module.exports = {
+  hexEncodeName,
+  hexEncodeTXT,
+  displayNode,
+  makeNode,
+  dnsName,
+  encodeARecord,
+  encodeSRecord,
+  encodeTXTRecord
 }
