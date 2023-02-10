@@ -31,6 +31,8 @@ describe('DNS Tests', function () {
   const eName = 'e.' + nameDOMAIN
   const eNameHash = ethers.utils.keccak256(dns.dnsName(eName))
   const fName = 'f.' + nameDOMAIN
+  const oneName = 'one.' + nameDOMAIN
+  const oneNameHash = ethers.utils.keccak256(dns.dnsName(oneName))
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
@@ -43,7 +45,9 @@ describe('DNS Tests', function () {
   // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   // mapping for encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
   const initSOARec = dns.encodeSRecord(nameDOMAIN, 'ns1.countrydns.xyz.', 'hostmaster.test.country', '2018061501', '15620', '1800', '1814400', '14400')
-  const initRec = '0x' + initARec + initB1Rec + initB2Rec + initSOARec
+  // mapping for encodeCNAMERecord
+  const initCNAMERec = dns.encodeCNAMERecord('one.test.country', 'harmony.one')
+  const initRec = '0x' + initARec + initB1Rec + initB2Rec + initSOARec + initCNAMERec
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
@@ -145,6 +149,7 @@ describe('DNS Tests', function () {
       // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
       expect(await this.publicResolver.dnsRecord(node, aNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
+      expect(await this.publicResolver.dnsRecord(node, oneNameHash, Constants.DNSRecordType.CNAME)).to.equal('0x' + initCNAMERec)
       expect(await this.publicResolver.dnsRecord(node, nameDOMAINHash, Constants.DNSRecordType.SOA)).to.equal('0x' + initSOARec)
     })
 

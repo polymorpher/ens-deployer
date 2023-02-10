@@ -64,7 +64,7 @@ const dnsName = (name) => {
 
 const encodeARecord = (recName, recAddress) => {
   // Sample Mapping
-  // a.country. 3600 IN A 1.2.3.4
+  // a.test.country. 3600 IN A 1.2.3.4
   /*
     name: a.test.country
     type: A
@@ -82,6 +82,38 @@ const encodeARecord = (recName, recAddress) => {
     class: DNSRecord.Class.IN,
     ttl: 3600,
     address: recAddress
+  }
+  const bw = new BufferWriter()
+  const b = DNSRecord.write(bw, rec).dump()
+  //   console.log(`recName: ${recName}`)
+  //   console.log(`recAddress: ${recAddress}`)
+  console.log(`rec: ${JSON.stringify(rec)}`)
+  console.log(`b.json: ${JSON.stringify(b)}`)
+  console.log(`b.string: ${b.toString()}`)
+  console.log(`recordText: ${b.toString('hex')}`)
+  return b.toString('hex')
+}
+
+const encodeCNAMERecord = (recName, recData) => {
+  // Sample Mapping
+  // a.test.country. 3600 IN CNAME harmony.one
+  /*
+    name: a.test.country
+    type: CNAME
+    class: IN
+    ttl: 3600
+    data: harmony.one
+  */
+  // returns 036f6e65047465737407636f756e747279000005000100000e10000d076861726d6f6e79036f6e6500
+
+  // a empty address is used to remove existing records
+  let rec = {}
+  rec = {
+    name: recName,
+    type: DNSRecord.Type.CNAME,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    data: recData
   }
   const bw = new BufferWriter()
   const b = DNSRecord.write(bw, rec).dump()
@@ -158,6 +190,7 @@ export {
   makeNode,
   dnsName,
   encodeARecord,
+  encodeCNAMERecord,
   encodeSRecord,
   encodeTXTRecord
 }

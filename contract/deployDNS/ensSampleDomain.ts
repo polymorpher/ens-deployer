@@ -83,7 +83,7 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   await tx.wait()
   console.log(`Registered: ${domain}`)
 
-  // Also set a default A record
+  // Set default A records for domain and a.domain
   const publicResolver = await ethers.getContractAt('PublicResolver', resolverAddress)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
@@ -91,8 +91,11 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const initRecFQDN = dns.encodeARecord(FQDN, ip)
   const aNameFQDN = 'a.' + FQDN
   const initRecAFQDN = dns.encodeARecord(aNameFQDN, ip)
-  const initRec = '0x' + initRecFQDN + initRecAFQDN
+  // Set CNAME Record for one.domain
+  const oneNameFQDN = 'one.' + FQDN
+  const initRecCNAMEFQDN = dns.encodeARecord(oneNameFQDN, 'harmony.one')
   // Set Initial DNS entries
+  const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
   await tx.wait()
   // Set intial zonehash
