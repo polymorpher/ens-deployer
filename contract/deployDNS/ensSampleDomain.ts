@@ -93,7 +93,7 @@ async function registerDomain (domain, owner, ip, resolverAddress, registrarCont
   const initRecAFQDN = dns.encodeARecord(aNameFQDN, ip)
   // Set CNAME Record for one.domain
   const oneNameFQDN = 'one.' + FQDN
-  const initRecCNAMEFQDN = dns.encodeARecord(oneNameFQDN, 'harmony.one')
+  const initRecCNAMEFQDN = dns.encodeCNAMERecord(oneNameFQDN, 'harmony.one')
   // Set Initial DNS entries
   const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
   tx = await publicResolver.connect(owner).setDNSRecords(node, initRec)
