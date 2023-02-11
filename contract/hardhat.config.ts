@@ -95,6 +95,7 @@ const hardhatUserconfig: HardhatUserConfig = {
     clear: true,
     flat: true,
     only: [
+      'LengthBasedPriceOracle',
       'SimpleAssetPriceOracle',
       'RegistrarController'
     ],
