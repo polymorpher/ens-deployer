@@ -35,10 +35,7 @@ contract LengthBasedPriceOracle is IPriceOracle {
     // returned value is in wei
     function price(string calldata name, uint256 expires, uint256 duration) external view override returns (IPriceOracle.Price memory) {
         uint256 base = baseUnitPrice * duration;
-        return IPriceOracle.Price({
-            base: nanoUsdToWei(base),
-            premium: nanoUsdToWei(premium(name, expires, duration))
-        });
+        return IPriceOracle.Price({base: nanoUsdToWei(base), premium: nanoUsdToWei(premium(name, expires, duration))});
     }
 
     /**
@@ -52,12 +49,12 @@ contract LengthBasedPriceOracle is IPriceOracle {
     // input is in nanoUSD, output is in wei
     function nanoUsdToWei(uint256 amount) public view returns (uint256) {
         uint256 nativeTokenPrice = uint256(usdOracle.latestAnswer());
-        return amount * 1e18 / nativeTokenPrice;
+        return (amount * 1e18) / nativeTokenPrice;
     }
 
     function weiToNanoUsd(uint256 amountWei) public view returns (uint256) {
         uint256 nativeTokenPrice = uint256(usdOracle.latestAnswer());
-        return amountWei * nativeTokenPrice / 1e18;
+        return (amountWei * nativeTokenPrice) / 1e18;
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual returns (bool) {

@@ -28,15 +28,9 @@ library ENSUtils {
 }
 
 library ENSRegistryDeployer {
-    function deployRegistry(string memory tld)
-        public
-        returns (
-            ENSRegistry ens,
-            FIFSRegistrar fifsRegistrar,
-            ReverseRegistrar reverseRegistrar,
-            BaseRegistrarImplementation baseRegistrar
-        )
-    {
+    function deployRegistry(
+        string memory tld
+    ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, BaseRegistrarImplementation baseRegistrar) {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
 
@@ -198,11 +192,7 @@ contract ENSDeployer is Ownable {
     }
 
     // @polymorpher (Feb 1, 2023): added in case some deployed contract is misconfigured to allow call from this contract only (e.g. as owner)
-    function call(
-        address dest,
-        uint256 value,
-        bytes memory data
-    ) external onlyOwner {
+    function call(address dest, uint256 value, bytes memory data) external onlyOwner {
         (bool success, ) = dest.call{value: value}(data);
         require(success, "call failed");
     }
