@@ -1,4 +1,3 @@
-// import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import hre, { ethers } from 'hardhat'
 
 export async function deploy (context) {
