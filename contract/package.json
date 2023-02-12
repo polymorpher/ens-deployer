@@ -50,7 +50,6 @@
         "hardhat-deploy": "^0.11.12",
         "hardhat-gas-reporter": "^1.0.8",
         "idna-uts46": "^1.1.0",
-        "keccak": "^3.0.3",
         "lodash": "^4.17.21",
         "mocha": "^10.0.0",
         "prettier": "^2.6.2",
@@ -63,7 +62,6 @@
     },
     "dependencies": {
         "@ensdomains/ens-contracts": "^0.0.15",
-        "bip39": "^3.0.4",
         "dns-packet": "^5.4.0"
     }
 }
