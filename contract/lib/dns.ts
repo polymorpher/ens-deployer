@@ -1,40 +1,4 @@
-import { packet } from 'dns-packet'
-import { ethers } from 'ethers'
 import { BufferWriter, DNSRecord } from 'dns-js'
-import { utils } from './utils'
-// import { namehash } from 'eth-ens-namehash'
-const namehash = require('eth-ens-namehash')
-
-const hexEncodeName = (name) => {
-  return '0x' + packet.name.encode(name).toString('hex')
-}
-
-const hexEncodeTXT = (keys) => {
-  return '0x' + packet.answer.encode(keys).toString('hex')
-}
-
-const displayNode = (node) => {
-  console.log(`node                : ${node}`)
-  console.log(`node.dns.namehash   : ${namehash.hash(node)}`)
-  console.log(`node.label.k256.b   : ${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node))}`)
-  console.log(`node.label.k256.bB  : ${ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node)))}`)
-  console.log(`node.utils.namehash : ${utils.namehash(node)}`)
-  console.log(`node.utils.namehashS: ${utils.bytesToHexString(utils.namehash(node))}`)
-  console.log(`node.utils.namehashSB: ${ethers.utils.arrayify(utils.bytesToHexString(utils.namehash(node)))}`)
-  console.log(`node.toUtfBytes     : ${ethers.utils.toUtf8Bytes(node)}`)
-  console.log(`node.dnsName        : ${dnsName(node)}`)
-  // TLD_NODE = keccak256(bytes.concat(bytes32(0), keccak256(bytes(_tld))));
-  // console.log(`node.namehash0  : ${ethers.utils.keccak256(ethers.utils.concat(Constants.EMPTY_BYTES32, ethers.utils.keccak256(ethers.utils.toUtf8Bytes(node)));
-  //   console.log(`node.keccak256: ${ethers.utils.keccak256(node)}`)
-}
-
-const makeNode = (parent, child) => {
-  const parentHash = namehash.hash(parent)
-  //   const childHash = namehash.hash(child)
-  //   return ethers.utils.keccak256(ethers.utils.concat([parentHash, childHash]))
-  const childK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(child))
-  return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
-}
 
 const dnsName = (name) => {
   // strip leading and trailing .
@@ -183,11 +147,6 @@ const encodeTXTRecord = (recName, recText) => {
 }
 
 export {
-// module.exports = {
-  hexEncodeName,
-  hexEncodeTXT,
-  displayNode,
-  makeNode,
   dnsName,
   encodeARecord,
   encodeCNAMERecord,
