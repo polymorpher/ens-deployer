@@ -1,8 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ethers, network } from 'hardhat'
-import { BufferConsumer, BufferWriter, DNSRecord } from 'dns-js'
-import { PublicResolver } from '../typechain'
-const namehash = require('eth-ens-namehash')
+import { ethers } from 'hardhat'
 
 const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET_NANO_USD || '100000000000'
 const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
