@@ -2,8 +2,7 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
-// import { getTxCost } from '../utilities/contracts'
-const namehash = require('eth-ens-namehash')
+import namehash from 'eth-ens-namehash'
 
 describe('DNS Tests', function () {
   const ONE_ETH = ethers.utils.parseEther('1')
