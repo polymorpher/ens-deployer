@@ -7,8 +7,8 @@
     },
     "scripts": {
         "compile": "npx hardhat compile",
-        "deploy": "npx hardhat deploy",
-        "deploy-dns": "npx hardhat deploy --network local; npx hardhat deploy --deploy-scripts ./deployDNS --network local",
+        "deploy": "npx hardhat deploy --tags ENSDeployer",
+        "deploy-dns": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS",
         "test": "npx hardhat test",
         "test-deploy": "npx hardhat test ./test/deployment/Deployment.ts",
         "test-dns": "npx hardhat test ./test/dns/DNS.ts"
