@@ -1,4 +1,3 @@
-// export const Constants = require('./constants')
 import { Constants } from '../../lib'
 import * as contracts from './contracts'
 import * as deployAll from './deployAll'

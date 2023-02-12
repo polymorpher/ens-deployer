@@ -22,9 +22,10 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   })
   const oracleDeployer = await ethers.getContractAt('OracleDeployer', OracleDeployer.address)
   const priceOracle = await oracleDeployer.oracle()
+  const usdOracle = await oracleDeployer.usdOracle()
   console.log('oracleDeployer:', oracleDeployer.address)
   console.log('- priceOracle:', priceOracle)
-  console.log('- usdOracle:', await oracleDeployer.usdOracle())
+  console.log('- usdOracle:', usdOracle)
   const ENSUtils = await deploy('ENSUtils', { from: deployer })
   const ENSRegistryDeployer = await deploy('ENSRegistryDeployer', { from: deployer, libraries: { ENSUtils: ENSUtils.address } })
   const ENSNFTDeployer = await deploy('ENSNFTDeployer', { from: deployer, libraries: { ENSUtils: ENSUtils.address } })
@@ -70,8 +71,11 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log('reverse registrar node owner:', await ens.owner(reverseRegNode))
 
   const Multicall = await deploy('Multicall3', { from: deployer })
-
-  console.log('NEXT_PUBLIC_DEPLOYMENT_ADDRESSES=\'' + JSON.stringify({
+  const addresses = {
+    priceOracle,
+    usdOracle: await oracleDeployer.usdOracle(),
+    OracleDeployer: oracleDeployer.address,
+    ENSDeployer: ENSDeployer.address,
     ENSRegistry: await ens.address,
     BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
     FIFSRegistrar: await ensDeployer.fifsRegistrar(),
@@ -82,7 +86,9 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     PublicResolver: await ensDeployer.publicResolver(),
     UniversalResolver: await ensDeployer.universalResolver(),
     Multicall: await Multicall.address
-  }) + '\'')
+  }
+  console.log(JSON.stringify(addresses))
+  return addresses
 }
 f.tags = ['ENSDeployer']
 export default f
