@@ -15,24 +15,7 @@ import {
   TLDNameWrapper,
   UniversalResolver
 } from '../../typechain'
-import { Context } from 'mocha'
-
-interface TestContext extends Context {
-  oracleDeployer?: OracleDeployer;
-  priceOracle?: IPriceOracle;
-  usdOracle?: AggregatorInterface;
-  ensDeployer?: ENSDeployer;
-  ens?: ENSRegistry;
-  fifsRegistrar?: FIFSRegistrar;
-  reverseRegistrar?: ReverseRegistrar;
-  baseRegistrar?: BaseRegistrarImplementation;
-  metadataService?: StaticMetadataService;
-  nameWrapper?: TLDNameWrapper;
-  registrarController?: RegistrarController;
-  publicResolver?: PublicResolver;
-  universalResolver?: UniversalResolver;
-  multicall?: Multicall3;
-}
+import { TestContext } from './types'
 
 export async function deploy (context: TestContext) {
   const addresses = await DeployENS(hre)
@@ -50,10 +33,4 @@ export async function deploy (context: TestContext) {
   context.publicResolver = await ethers.getContractAt('PublicResolver', addresses.PublicResolver) as PublicResolver
   context.universalResolver = await ethers.getContractAt('UniversalResolver', addresses.UniversalResolver) as UniversalResolver
   context.multicall = await ethers.getContractAt('Multicall3', addresses.Multicall) as Multicall3
-
-  console.log('ens owner:', await context.ens.owner(new Uint8Array(32)))
-  const resolverNode = ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('resolver'))]))
-  const reverseRegNode = ethers.utils.keccak256(ethers.utils.concat([new Uint8Array(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('reverse'))]))
-  console.log('resolver node owner:', await context.ens.owner(resolverNode))
-  console.log('reverse registrar node owner:', await context.ens.owner(reverseRegNode))
 }

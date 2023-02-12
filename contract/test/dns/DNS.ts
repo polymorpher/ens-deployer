@@ -3,6 +3,7 @@ import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 import namehash from 'eth-ens-namehash'
+import { TestContext } from '../utilities/types'
 
 describe('DNS Tests', function () {
   const ONE_ETH = ethers.utils.parseEther('1')
@@ -50,10 +51,9 @@ describe('DNS Tests', function () {
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
-    await contracts.prepare(this, []) // get the signers
-    await deployAll.deploy(this)
-
-    // console.log(`Owner of test.country before registration: ${await this.ens.owner(node)}`)
+    const context = this as TestContext
+    await contracts.prepare(context) // get the signers
+    await deployAll.deploy(context)
 
     // register test.country
     const duration = ethers.BigNumber.from(30 * 24 * 3600)
@@ -62,28 +62,25 @@ describe('DNS Tests', function () {
     const reverseRecord = false
     const fuses = ethers.BigNumber.from(0)
     const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
-    // const price = await this.priceOracle.price(node, 0, duration)
-    // console.log(`price  : ${JSON.stringify(price.toString())}`)
-    // console.log(`ONE_ETH: ${JSON.stringify(ONE_ETH.mul(1100).toString())}`)
-    const commitment = await this.registrarController.connect(this.alice).makeCommitment(
+    const commitment = await context.registrarController.connect(context.alice).makeCommitment(
       DOMAIN,
-      this.alice.address,
+      context.alice.address,
       duration,
       secret,
-      this.publicResolver.address,
+      context.publicResolver.address,
       callData,
       reverseRecord,
       fuses,
       wrapperExpiry
     )
-    let tx = await this.registrarController.connect(this.alice).commit(commitment)
+    let tx = await context.registrarController.connect(context.alice).commit(commitment)
     await tx.wait()
-    tx = await this.registrarController.register(
+    tx = await context.registrarController.register(
       DOMAIN,
-      this.alice.address,
+      context.alice.address,
       duration,
       secret,
-      this.publicResolver.address,
+      context.publicResolver.address,
       callData,
       reverseRecord,
       fuses,
@@ -95,20 +92,20 @@ describe('DNS Tests', function () {
     await tx.wait()
     // Set Initial DNS entries
     console.log('==========')
-    console.log('Initializaing a.test.country')
+    console.log('Initializing a.test.country')
     console.log('node: test.country')
     console.log(`nodeHash: ${node}`)
     console.log(`0x + initARec: ${'0x' + initARec}`)
-    tx = await this.publicResolver.connect(this.alice).setDNSRecords(node, '0x' + initARec)
+    tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, '0x' + initARec)
     await tx.wait()
     console.log('==========')
     // console.log(`nodeBefore: ${node}`)
     // console.log(`initRec for a only: ${'0x' + initARec}`)
-    tx = await this.publicResolver.connect(this.alice).setDNSRecords(node, initRec)
+    tx = await context.publicResolver.connect(context.alice).setDNSRecords(node, initRec)
     await tx.wait()
     // Set intial zonehash
-    expect(await this.publicResolver.zonehash(node)).to.equal('0x')
-    tx = await this.publicResolver.connect(this.alice).setZonehash(
+    expect(await context.publicResolver.zonehash(node)).to.equal('0x')
+    tx = await context.publicResolver.connect(context.alice).setZonehash(
       node,
       '0x0000000000000000000000000000000000000000000000000000000000000001'
     )

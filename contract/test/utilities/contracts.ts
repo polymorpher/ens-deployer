@@ -1,10 +1,7 @@
 import { ethers } from 'hardhat'
+import { TestContext } from './types'
 
-export async function prepare (testEnvironment, contracts) {
-  for (const i in contracts) {
-    const contract = contracts[i]
-    testEnvironment[contract] = await ethers.getContractFactory(contract)
-  }
+export async function prepare (testEnvironment: TestContext) {
   testEnvironment.signers = await ethers.getSigners()
   testEnvironment.deployer = testEnvironment.signers[0]
   testEnvironment.operatorA = testEnvironment.signers[1]
