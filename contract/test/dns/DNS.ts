@@ -3,7 +3,8 @@ import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 import namehash from 'eth-ens-namehash'
-import { TestContext } from '../utilities/types'
+import '../utilities/types.d'
+import { Context } from 'mocha'
 
 function makeTestDomains (subdomains: string[], parentDomain: string): [string, string][] {
   const domains: [string, string][] = []
@@ -25,10 +26,10 @@ const zoneHashWithOffset = (offset: number = 0): string => {
   r[r.length - 1] = offset % 255
   return Buffer.from(r).toString('hex')
 }
+const ONE_ETH = ethers.utils.parseEther('1')
+const TLD = process.env.TLD || 'country'
 
 describe('DNS Tests', function () {
-  const ONE_ETH = ethers.utils.parseEther('1')
-  const TLD = process.env.TLD || 'country'
   const TestDomain = 'test'
   const TestNode = namehash.hash(TestDomain + '.' + TLD)
   const TestDomainFqdn = `${TestDomain}.${TLD}.`
@@ -47,13 +48,13 @@ describe('DNS Tests', function () {
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
-  const [initARec] = dns.encodeARecord(TestSubdomainA, '1.2.3.4')
+  const [TestSubdomainAInitialRecord] = dns.encodeARecord(TestSubdomainA, '1.2.3.4')
   // b.test.country. 3600 IN A 2.3.4.5
-  const [initB1Rec] = dns.encodeARecord(TestSubdomainB, '2.3.4.5')
+  const [TestSubdomainBInitialRecord1] = dns.encodeARecord(TestSubdomainB, '2.3.4.5')
   // b.test.country. 3600 IN A 3.4.5.6
-  const [initB2Rec] = dns.encodeARecord(TestSubdomainB, '3.4.5.6')
+  const [TestSubdomainBInitialRecord2] = dns.encodeARecord(TestSubdomainB, '3.4.5.6')
   // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
-  const DefaultSOA = {
+  const DefaultSoa = {
     primary: 'ns1.countrydns.xyz.',
     admin: 'hostmaster.test.country',
     serial: 2018061501,
@@ -62,15 +63,14 @@ describe('DNS Tests', function () {
     expiration: 1814400,
     minimum: 14400
   }
-  const [initSOARec] = dns.encodeSOARecord(TestDomainFqdn, DefaultSOA)
-  const [initCNAMERec] = dns.encodeCNAMERecord('one.test.country', 'harmony.one')
-  const initRec = '0x' + initARec + initB1Rec + initB2Rec + initSOARec + initCNAMERec
+  const [InitialSoaRecord] = dns.encodeSOARecord(TestDomainFqdn, DefaultSoa)
+  const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord('one.test.country', 'harmony.one')
+  const InitialFullDnsRecord = '0x' + TestSubdomainAInitialRecord + TestSubdomainBInitialRecord1 + TestSubdomainBInitialRecord2 + InitialSoaRecord + TestSubdomainOneInitialCnameRecord
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
-    const context = this as TestContext
-    await contracts.prepare(context) // get the signers
-    await deployAll.deploy(context)
+    await contracts.prepare(this) // get the signers
+    await deployAll.deploy(this)
 
     // register test.country
     const duration = ethers.BigNumber.from(30 * 24 * 3600)
@@ -79,25 +79,25 @@ describe('DNS Tests', function () {
     const reverseRecord = false
     const fuses = ethers.BigNumber.from(0)
     const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
-    const commitment = await context.registrarController.connect(context.alice).makeCommitment(
+    const commitment = await this.registrarController.connect(this.alice).makeCommitment(
       TestDomain,
-      context.alice.address,
+      this.alice.address,
       duration,
       secret,
-      context.publicResolver.address,
+      this.publicResolver.address,
       callData,
       reverseRecord,
       fuses,
       wrapperExpiry
     )
-    let tx = await context.registrarController.connect(context.alice).commit(commitment)
+    let tx = await this.registrarController.connect(this.alice).commit(commitment)
     await tx.wait()
-    tx = await context.registrarController.register(
+    tx = await this.registrarController.register(
       TestDomain,
-      context.alice.address,
+      this.alice.address,
       duration,
       secret,
-      context.publicResolver.address,
+      this.publicResolver.address,
       callData,
       reverseRecord,
       fuses,
@@ -108,18 +108,16 @@ describe('DNS Tests', function () {
     )
     await tx.wait()
     // Set Initial DNS entries
-    console.log('==========')
     console.log('Initializing a.test.country')
-    console.log('node: test.country')
-    console.log(`nodeHash: ${TestNode}`)
-    console.log(`0x + initARec: ${'0x' + initARec}`)
-    tx = await context.publicResolver.connect(context.alice).setDNSRecords(TestNode, '0x' + initARec)
+    console.log(`node: test.country; hash: ${TestNode}`)
+    console.log(`Initial A record for: ${'0x' + TestSubdomainAInitialRecord}`)
+    tx = await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, '0x' + TestSubdomainAInitialRecord)
     await tx.wait()
-    tx = await context.publicResolver.connect(context.alice).setDNSRecords(TestNode, initRec)
+    tx = await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, InitialFullDnsRecord)
     await tx.wait()
     // Set initial zonehash
-    expect(await context.publicResolver.zonehash(TestNode)).to.equal('0x')
-    tx = await context.publicResolver.connect(context.alice).setZonehash(
+    expect(await this.publicResolver.zonehash(TestNode)).to.equal('0x')
+    tx = await this.publicResolver.connect(this.alice).setZonehash(
       TestNode,
       zoneHashWithOffset(1)
     )
@@ -139,36 +137,33 @@ describe('DNS Tests', function () {
   })
 
   describe('DNS: Check the reading of initial DNS Entries', async function () {
-    it('DNS-001 permits setting name by owner', async function () {
+    it('DNS-001 permits setting name by owner', async function (this: Context) {
       // Test Ownership via ENSRegistry
       console.log(`DNS-001: node: ${TestNode}`)
-      console.log(`DNS-001: nodeArrayify: ${ethers.utils.arrayify(TestNode)}`)
-      console.log('ETH_NODE: 0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae')
-      expect('0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae').to.equal(namehash.hash('eth'))
       expect(await this.nameWrapper.TLD_NODE()).to.equal(namehash.hash('country'))
       expect(await this.ens.owner(TestNode)).to.equal(this.nameWrapper.address)
-      expect(await this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')))))).to.equal(this.nameWrapper.address)
-      const testxyzNode = namehash.hash('textxyz' + '.' + TLD)
+      expect(await this.baseRegistrar.ownerOf(ethers.utils.id('test'))).to.equal(this.nameWrapper.address)
+      const testxyzNode = namehash.hash('testxyz' + '.' + TLD)
       // test an unregistered node
       expect(await this.ens.owner(testxyzNode)).to.equal(Constants.ZERO_ADDRESS)
-      //   await expect(this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.be.reverted
-      expect(await this.baseRegistrar.ownerOf(ethers.BigNumber.from(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('testxyz')))))).to.equal(Constants.ZERO_ADDRESS)
-      // Test Ownership via DNSResolver by seeing that alice's updates were succesfull
-      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
-      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
-      expect(await this.publicResolver.dnsRecord(TestNode, oneNameHash, Constants.DNSRecordType.CNAME)).to.equal('0x' + initCNAMERec)
-      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal('0x' + initSOARec)
+      //   await expect(this.baseRegistrar.ownerOf(ethers.utils.id('testxyz'))).to.be.reverted
+      expect(await this.baseRegistrar.ownerOf(ethers.utils.id('testxyz'))).to.equal(Constants.ZERO_ADDRESS)
+      // Test ownership via DNSResolver by checking that alice's updates were successful
+      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal('0x' + TestSubdomainAInitialRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, Constants.DNSRecordType.A)).to.equal('0x' + TestSubdomainBInitialRecord1 + TestSubdomainBInitialRecord2)
+      expect(await this.publicResolver.dnsRecord(TestNode, oneNameHash, Constants.DNSRecordType.CNAME)).to.equal('0x' + TestSubdomainOneInitialCnameRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal('0x' + InitialSoaRecord)
     })
 
-    it('DNS-002 should update existing records', async function () {
+    it('DNS-002 should update existing records', async function (this: Context) {
       // a.test.country. 3600 IN A 4.5.6.7 (changing address)
-      const [initARec] = dns.encodeARecord(TestSubdomainA, '4.5.6.7')
+      const [updatedARecord] = dns.encodeARecord(TestSubdomainA, '4.5.6.7')
       // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061502 15620 1800 1814400 14400 (changing serial)
-      const [soinitARec] = dns.encodeSOARecord(TestDomainFqdn, { ...DefaultSOA, serial: 2018061502 })
-      const rec = '0x' + initARec + soinitARec
-      await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, rec)
-      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal('0x' + initARec)
-      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal('0x' + soinitARec)
+      const [updatedSoaRecord] = dns.encodeSOARecord(TestDomainFqdn, { ...DefaultSoa, serial: 2018061502 })
+      const updatedRecord = '0x' + updatedARecord + updatedSoaRecord
+      await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, updatedRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal('0x' + updatedARecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal('0x' + updatedSoaRecord)
 
       // unchanged records still exist
       // b.test.country. 3600 IN A 2.3.4.5
@@ -178,7 +173,7 @@ describe('DNS Tests', function () {
       expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
     })
 
-    it('DNS-003 should keep track of entries', async function () {
+    it('DNS-003 should keep track of entries', async function (this: Context) {
       // c.test.country. 3600 IN A 1.2.3.4
       const [cRec] = dns.encodeARecord(TestSubdomainC, '1.2.3.4')
       const rec = '0x' + cRec
@@ -198,7 +193,6 @@ describe('DNS Tests', function () {
       // c.test.country. 3600 IN A
       const [cRec2] = dns.encodeARecord(TestSubdomainC, '')
       const rec2 = '0x' + cRec2
-
       await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, rec2)
 
       // Removal returns to 0
@@ -206,7 +200,7 @@ describe('DNS Tests', function () {
       expect(hasEntries).to.be.false
     })
 
-    it('DNS-004 should handle single-record updates', async function () {
+    it('DNS-004 should handle single-record updates', async function (this: Context) {
       // e.test.country. 3600 IN A 1.2.3.4
       const [eRec] = dns.encodeARecord(TestSubdomainE, '1.2.3.4')
       const rec = '0x' + eRec
@@ -216,7 +210,7 @@ describe('DNS Tests', function () {
       expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainEDnsHash, 1)).to.equal('0x' + eRec)
     })
 
-    it('DNS-005 forbids setting DNS records by non-owners', async function () {
+    it('DNS-005 forbids setting DNS records by non-owners', async function (this: Context) {
       // f.test.country. 3600 IN A 1.2.3.4
       const [fRec] = dns.encodeARecord(TestSubdomainF, '1.2.3.4')
       const rec = '0x' + fRec
@@ -225,11 +219,11 @@ describe('DNS Tests', function () {
       ).to.be.reverted
     })
 
-    it('DNS-006 permits setting zonehash by owner', async function () {
+    it('DNS-006 permits setting zonehash by owner', async function (this: Context) {
       expect(await this.publicResolver.zonehash(TestNode)).to.equal(zoneHashWithOffset(1))
     })
 
-    it('DNS-007 can overwrite previously set zonehash', async function () {
+    it('DNS-007 can overwrite previously set zonehash', async function (this: Context) {
       await this.publicResolver.connect(this.alice).setZonehash(
         TestNode,
         zoneHashWithOffset(2)
@@ -238,7 +232,7 @@ describe('DNS Tests', function () {
         .to.equal(zoneHashWithOffset(2))
     })
 
-    it('DNS-008 can overwrite to same zonehash', async function () {
+    it('DNS-008 can overwrite to same zonehash', async function (this: Context) {
       await this.publicResolver.connect(this.alice).setZonehash(
         TestNode,
         zoneHashWithOffset(1),
@@ -250,7 +244,7 @@ describe('DNS Tests', function () {
       )
     })
 
-    it('DNS-009 forbids setting zonehash by non-owners', async function () {
+    it('DNS-009 forbids setting zonehash by non-owners', async function (this: Context) {
       await expect(
         this.publicResolver.connect(this.bob).setZonehash(
           TestNode,
@@ -259,7 +253,7 @@ describe('DNS Tests', function () {
       ).to.be.reverted
     })
 
-    it('DNS-010 forbids writing same zonehash by non-owners', async function () {
+    it('DNS-010 forbids writing same zonehash by non-owners', async function (this: Context) {
       await expect(
         this.publicResolver.connect(this.bob).setZonehash(
           TestNode,
@@ -274,20 +268,20 @@ describe('DNS Tests', function () {
       //   expect(await this.publicResolver.zonehash(node)).to.equal(null)
     })
 
-    it('DNS-012 emits the correct event', async function () {
+    it('DNS-012 emits the correct event', async function (this: Context) {
       let tx = await this.publicResolver.connect(this.alice).setZonehash(
         TestNode,
         zoneHashWithOffset(2)
       )
       let receipt = await tx.wait()
-      expect(receipt.events.length).to.equal(1)
-      expect(receipt.events[0].event).to.equal('DNSZonehashChanged')
-      expect(receipt.events[0].args[0]).to.equal(TestNode)
-      expect(receipt.events[0].args[1]).to.equal(
+      expect(receipt.events?.length).to.equal(1)
+      expect(receipt.events?.[0].event).to.equal('DNSZonehashChanged')
+      expect(receipt.events?.[0].args?.[0]).to.equal(TestNode)
+      expect(receipt.events?.[0].args?.[1]).to.equal(
         zoneHashWithOffset(1)
       )
       expect(
-        receipt.events[0].args.zonehash).to.equal(
+        receipt.events?.[0].args?.zonehash).to.equal(
         zoneHashWithOffset(2)
       )
 
@@ -296,14 +290,14 @@ describe('DNS Tests', function () {
         zoneHashWithOffset(3)
       )
       receipt = await tx.wait()
-      expect(receipt.events.length).to.equal(1)
-      expect(receipt.events[0].event).to.equal('DNSZonehashChanged')
-      expect(receipt.events[0].args[0]).to.equal(TestNode)
-      expect(receipt.events[0].args[1]).to.equal(
+      expect(receipt.events?.length).to.equal(1)
+      expect(receipt.events?.[0].event).to.equal('DNSZonehashChanged')
+      expect(receipt.events?.[0].args?.[0]).to.equal(TestNode)
+      expect(receipt.events?.[0].args?.[1]).to.equal(
         zoneHashWithOffset(2)
       )
       expect(
-        receipt.events[0].args.zonehash).to.equal(
+        receipt.events?.[0].args?.zonehash).to.equal(
         zoneHashWithOffset(3)
       )
 
@@ -313,20 +307,20 @@ describe('DNS Tests', function () {
       )
       receipt = await tx.wait()
       //   console.log(`receipt: ${JSON.stringify(receipt)}`)
-      expect(receipt.events.length).to.equal(1)
-      expect(receipt.events[0].event).to.equal('DNSZonehashChanged')
-      expect(receipt.events[0].args[0]).to.equal(TestNode)
+      expect(receipt.events?.length).to.equal(1)
+      expect(receipt.events?.[0].event).to.equal('DNSZonehashChanged')
+      expect(receipt.events?.[0].args?.[0]).to.equal(TestNode)
       expect(
-        receipt.events[0].args[1]).to.equal(
+        receipt.events?.[0].args?.[1]).to.equal(
         zoneHashWithOffset(3)
       )
       expect(
-        receipt.events[0].args[2]).to.equal(
+        receipt.events?.[0].args?.[2]).to.equal(
         zoneHashWithOffset()
       )
     })
 
-    it('DNS-013 resets dnsRecords on version change', async function () {
+    it('DNS-013 resets dnsRecords on version change', async function (this: Context) {
       await this.publicResolver.connect(this.alice).clearRecords(TestNode)
       expect(
         await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, 1)).to.equal(
@@ -342,13 +336,13 @@ describe('DNS Tests', function () {
       )
     })
 
-    it('DNS-014 resets zonehash on version change', async function () {
+    it('DNS-014 resets zonehash on version change', async function (this: Context) {
       await this.publicResolver.connect(this.alice).clearRecords(TestNode)
       expect(await this.publicResolver.zonehash(TestNode)).to.equal('0x')
     })
   })
 
-  it('DNS-015 should handle TXT record updates', async function () {
+  it('DNS-015 should handle TXT record updates', async function (this: Context) {
     // test.country. SampleText
     const [txtRec] = dns.encodeTXTRecord(TestDomainFqdn, 'SampleText')
     const rec = '0x' + txtRec

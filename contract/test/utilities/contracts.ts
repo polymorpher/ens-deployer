@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat'
-import { TestContext } from './types'
+import { Context } from 'mocha'
 
-export async function prepare (testEnvironment: TestContext) {
+export async function prepare (testEnvironment: Context) {
   testEnvironment.signers = await ethers.getSigners()
   testEnvironment.deployer = testEnvironment.signers[0]
   testEnvironment.operatorA = testEnvironment.signers[1]

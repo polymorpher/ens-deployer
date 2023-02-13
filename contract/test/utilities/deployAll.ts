@@ -15,9 +15,9 @@ import {
   TLDNameWrapper,
   UniversalResolver
 } from '../../typechain'
-import { TestContext } from './types'
+import { Context } from 'mocha'
 
-export async function deploy (context: TestContext) {
+export async function deploy (context: Context) {
   const addresses = await DeployENS(hre)
   context.oracleDeployer = await ethers.getContractAt('OracleDeployer', addresses.OracleDeployer) as OracleDeployer
   context.priceOracle = await ethers.getContractAt('IPriceOracle', addresses.priceOracle) as IPriceOracle
