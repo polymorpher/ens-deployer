@@ -1,8 +1,20 @@
 import { BufferWriter, DNSRecord } from 'dns-js'
 
+interface SOARecordValue {
+  primary: string
+  admin: string
+  serial: number
+  refresh: number
+  retry: number
+  expiration: number
+  minimum: number
+}
+// TODO: define members of object for each type of record
+type EncodedRecord = [string, Buffer, object]
+
 // name is a FQDN with or without trailing dot
 // output is the encoding per RFC1035 https://www.ietf.org/rfc/rfc1035.txt
-const dnsName = (name: string) => {
+export const dnsName = (name: string) => {
   // strip leading and trailing .
   const n = name.replace(/^\.|\.$/gm, '')
 
@@ -22,7 +34,19 @@ const dnsName = (name: string) => {
   return '0x' + buf.toString('hex')
 }
 
-const encodeARecord = (recName, recAddress) => {
+export const debugPrintRecord = (record: object, bufferWriter: Buffer) => {
+  console.log(`rec: ${JSON.stringify(record)}`)
+  console.log(`b.json: ${JSON.stringify(bufferWriter)}`)
+  console.log(`b.string: ${bufferWriter.toString()}`)
+  console.log(`recordText: ${bufferWriter.toString('hex')}`)
+}
+
+const encodeRecord = (record: object): EncodedRecord => {
+  const buffer = DNSRecord.write(new BufferWriter(), record).dump()
+  return [buffer.toString('hex'), buffer, record]
+}
+
+export const encodeARecord = (name: string, ipAddress: string): EncodedRecord => {
   // Sample Mapping
   // a.test.country. 3600 IN A 1.2.3.4
   /*
@@ -35,26 +59,16 @@ const encodeARecord = (recName, recAddress) => {
   // returns 0161047465737407636f756e747279000001000100000e10000401020304
 
   // a empty address is used to remove existing records
-  let rec = {}
-  rec = {
-    name: recName,
+  return encodeRecord({
+    name,
     type: DNSRecord.Type.A,
     class: DNSRecord.Class.IN,
     ttl: 3600,
-    address: recAddress
-  }
-  const bw = new BufferWriter()
-  const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`recName: ${recName}`)
-  //   console.log(`recAddress: ${recAddress}`)
-  console.log(`rec: ${JSON.stringify(rec)}`)
-  console.log(`b.json: ${JSON.stringify(b)}`)
-  console.log(`b.string: ${b.toString()}`)
-  console.log(`recordText: ${b.toString('hex')}`)
-  return b.toString('hex')
+    address: ipAddress
+  })
 }
 
-const encodeCNAMERecord = (recName, recData) => {
+export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord => {
   // Sample Mapping
   // a.test.country. 3600 IN CNAME harmony.one
   /*
@@ -67,26 +81,16 @@ const encodeCNAMERecord = (recName, recData) => {
   // returns 036f6e65047465737407636f756e747279000005000100000e10000d076861726d6f6e79036f6e6500
 
   // a empty address is used to remove existing records
-  let rec = {}
-  rec = {
-    name: recName,
+  return encodeRecord({
+    name,
     type: DNSRecord.Type.CNAME,
     class: DNSRecord.Class.IN,
     ttl: 3600,
-    data: recData
-  }
-  const bw = new BufferWriter()
-  const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`recName: ${recName}`)
-  //   console.log(`recAddress: ${recAddress}`)
-  console.log(`rec: ${JSON.stringify(rec)}`)
-  console.log(`b.json: ${JSON.stringify(b)}`)
-  console.log(`b.string: ${b.toString()}`)
-  console.log(`recordText: ${b.toString('hex')}`)
-  return b.toString('hex')
+    data: rvalue
+  })
 }
 
-const encodeSRecord = (recName, primary, admin, serial, refresh, retry, expiration, minimum) => {
+export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRecord => {
   // Sample Mapping
   // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   /*
@@ -103,26 +107,16 @@ const encodeSRecord = (recName, primary, admin, serial, refresh, retry, expirati
    minimum: 14400
   */
   // returns  047465737407636f756e747279000006000100000000003a036e73310a636f756e747279646e730378797a000a686f73746d61737465720474657374c00578492cbd00003d0400000708001baf8000003840
-  const rec = {
-    name: recName,
+  return encodeRecord({
+    name,
     ttL: 86400,
     type: DNSRecord.Type.SOA,
     class: DNSRecord.Class.IN,
-    primary,
-    admin,
-    serial,
-    refresh,
-    retry,
-    expiration,
-    minimum
-  }
-  const bw = new BufferWriter()
-  const b = DNSRecord.write(bw, rec).dump()
-  //   console.log(`recordText: ${b.toString('hex')}`)
-  return b.toString('hex')
+    ...rvalue
+  })
 }
 
-const encodeTXTRecord = (recName, recText) => {
+export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord => {
   // Sample Mapping
   // test.country. SampleText
   /*
@@ -130,22 +124,10 @@ const encodeTXTRecord = (recName, recText) => {
     data: SampleText
     */
   // returns
-  const rec = {
-    name: recName,
+  return encodeRecord({
+    name,
     type: DNSRecord.Type.TXT,
     class: DNSRecord.Class.IN,
-    data: recText
-  }
-  const bw = new BufferWriter()
-  const b = DNSRecord.write(bw, rec).dump()
-  // console.log(`recordText: ${b.toString('hex')}`)
-  return b.toString('hex')
-}
-
-export {
-  dnsName,
-  encodeARecord,
-  encodeCNAMERecord,
-  encodeSRecord,
-  encodeTXTRecord
+    data: rvalue
+  })
 }

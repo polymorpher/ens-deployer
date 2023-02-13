@@ -36,17 +36,22 @@ describe('DNS Tests', function () {
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
-  const initARec = dns.encodeARecord(aName, '1.2.3.4')
-
+  const [initARec] = dns.encodeARecord(aName, '1.2.3.4')
   // b.test.country. 3600 IN A 2.3.4.5
-  const initB1Rec = dns.encodeARecord(bName, '2.3.4.5')
+  const [initB1Rec] = dns.encodeARecord(bName, '2.3.4.5')
   // b.test.country. 3600 IN A 3.4.5.6
-  const initB2Rec = dns.encodeARecord(bName, '3.4.5.6')
+  const [initB2Rec] = dns.encodeARecord(bName, '3.4.5.6')
   // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
-  // mapping for encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
-  const initSOARec = dns.encodeSRecord(nameDOMAIN, 'ns1.countrydns.xyz.', 'hostmaster.test.country', '2018061501', '15620', '1800', '1814400', '14400')
-  // mapping for encodeCNAMERecord
-  const initCNAMERec = dns.encodeCNAMERecord('one.test.country', 'harmony.one')
+  const [initSOARec] = dns.encodeSOARecord(nameDOMAIN, {
+    primary: 'ns1.countrydns.xyz.',
+    admin: 'hostmaster.test.country',
+    serial: 2018061501,
+    refresh: 15620,
+    retry: 1800,
+    expiration: 1814400,
+    minimum: 14400
+  })
+  const [initCNAMERec] = dns.encodeCNAMERecord('one.test.country', 'harmony.one')
   const initRec = '0x' + initARec + initB1Rec + initB2Rec + initSOARec + initCNAMERec
 
   before(async function () {
@@ -151,10 +156,18 @@ describe('DNS Tests', function () {
 
     it('DNS-002 should update existing records', async function () {
       // a.test.country. 3600 IN A 4.5.6.7 (changing address)
-      const initARec = dns.encodeARecord(aName, '4.5.6.7')
+      const [initARec] = dns.encodeARecord(aName, '4.5.6.7')
       // country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061502 15620 1800 1814400 14400 (changing serial)
       // mapping for encodeSRecord (recName, primary, admin, serial, refresh, retry, expiration, minimum) {
-      const soinitARec = dns.encodeSRecord(nameDOMAIN, 'ns1.countrydns.xyz.', 'hostmaster.test.country', '2018061502', '15620', '1800', '1814400', '14400')
+      const [soinitARec] = dns.encodeSOARecord(nameDOMAIN, {
+        primary: 'ns1.countrydns.xyz.',
+        admin: 'hostmaster.test.country',
+        serial: 2018061502, // This value is changed from 2018061501
+        refresh: 15620,
+        retry: 1800,
+        expiration: 1814400,
+        minimum: 14400
+      })
       const rec = '0x' + initARec + soinitARec
 
       await this.publicResolver.connect(this.alice).setDNSRecords(node, rec)
@@ -163,15 +176,15 @@ describe('DNS Tests', function () {
 
       // unchanged records still exist
       // b.test.country. 3600 IN A 2.3.4.5
-      const initB1Rec = dns.encodeARecord(bName, '2.3.4.5')
+      const [initB1Rec] = dns.encodeARecord(bName, '2.3.4.5')
       // b.test.country. 3600 IN A 3.4.5.6
-      const initB2Rec = dns.encodeARecord(bName, '3.4.5.6')
+      const [initB2Rec] = dns.encodeARecord(bName, '3.4.5.6')
       expect(await this.publicResolver.dnsRecord(node, bNameHash, Constants.DNSRecordType.A)).to.equal('0x' + initB1Rec + initB2Rec)
     })
 
     it('DNS-003 should keep track of entries', async function () {
       // c.test.country. 3600 IN A 1.2.3.4
-      const cRec = dns.encodeARecord(cName, '1.2.3.4')
+      const [cRec] = dns.encodeARecord(cName, '1.2.3.4')
       const rec = '0x' + cRec
       await this.publicResolver.connect(this.alice).setDNSRecords(node, rec)
 
@@ -187,7 +200,7 @@ describe('DNS Tests', function () {
       expect(hasEntries).to.be.true
 
       // c.test.country. 3600 IN A
-      const cRec2 = dns.encodeARecord(cName, '')
+      const [cRec2] = dns.encodeARecord(cName, '')
       const rec2 = '0x' + cRec2
 
       await this.publicResolver.connect(this.alice).setDNSRecords(node, rec2)
@@ -199,7 +212,7 @@ describe('DNS Tests', function () {
 
     it('DNS-004 should handle single-record updates', async function () {
       // e.test.country. 3600 IN A 1.2.3.4
-      const eRec = dns.encodeARecord(eName, '1.2.3.4')
+      const [eRec] = dns.encodeARecord(eName, '1.2.3.4')
       const rec = '0x' + eRec
 
       await this.publicResolver.connect(this.alice).setDNSRecords(node, rec)
@@ -209,7 +222,7 @@ describe('DNS Tests', function () {
 
     it('DNS-005 forbids setting DNS records by non-owners', async function () {
       // f.test.country. 3600 IN A 1.2.3.4
-      const fRec = dns.encodeARecord(fName, '1.2.3.4')
+      const [fRec] = dns.encodeARecord(fName, '1.2.3.4')
       const rec = '0x' + fRec
       await expect(
         this.publicResolver.connect(this.bob).setDNSRecords(node, rec)
@@ -341,7 +354,7 @@ describe('DNS Tests', function () {
 
   it('DNS-015 should handle TXT record updates', async function () {
     // test.country. SampleText
-    const txtRec = dns.encodeTXTRecord(nameDOMAIN, 'SampleText')
+    const [txtRec] = dns.encodeTXTRecord(nameDOMAIN, 'SampleText')
     const rec = '0x' + txtRec
 
     await this.publicResolver.connect(this.alice).setDNSRecords(node, rec)
