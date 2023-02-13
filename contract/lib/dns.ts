@@ -1,6 +1,8 @@
 import { BufferWriter, DNSRecord } from 'dns-js'
 
-const dnsName = (name) => {
+// name is a FQDN with or without trailing dot
+// output is the encoding per RFC1035 https://www.ietf.org/rfc/rfc1035.txt
+const dnsName = (name: string) => {
   // strip leading and trailing .
   const n = name.replace(/^\.|\.$/gm, '')
 
@@ -17,13 +19,7 @@ const dnsName = (name) => {
     }
   }
   buf[offset++] = 0
-  return (
-    '0x' +
-        buf.reduce(
-          (output, elem) => output + ('0' + elem.toString(16)).slice(-2),
-          ''
-        )
-  )
+  return '0x' + buf.toString('hex')
 }
 
 const encodeARecord = (recName, recAddress) => {
