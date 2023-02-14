@@ -47,6 +47,7 @@ export const encodeRecord = (record: object): EncodedRecord => {
   return [buffer.toString('hex'), buffer, record]
 }
 
+// TODO: buggy for empty ipAddress. Must fix later
 export const encodeARecord = (name: string, ipAddress: string): EncodedRecord => {
   // Sample Mapping
   // a.test.country. 3600 IN A 1.2.3.4
