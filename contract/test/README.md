@@ -1,80 +1,32 @@
-# ens-deployer Test Suite
+# ens-deployer tests
 
 ## Overview
-This folder holds test suites for deployment of ens contracts and reading writing of dns records.
-It can be enhance further as functionality is rolled out.
 
-We also publish abis in the [./abi](./abi) folder. This is manged using the [hardhat-abi-exporter](https://www.npmjs.com/package/hardhat-abi-exporter) package which has configuration options including the format of the abi's as well as which abi's to publish.
+The tests are divided in two major areas: contract deployment, and DNS records R/W.
 
-**TODO Items**
-- [ ] Review logic when running all tests to ensure that timeouts do not occur.
-- [ ] Review additional [ens tests](https://github.com/jw-ens-domains/ens-contracts/tree/master/test)
-- [ ] Enhance DNS Record to support more [record types](https://en.wikipedia.org/wiki/List_of_DNS_record_types) as needed.
+As of now, only A, SOA, TXT records are tested. We will extend for more later.
 
-## Setup
+## Known issues
 
-**Initialize the repository**
-```
-git clone https://github.com/polymorpher/ens-deployer
-cd ens-deployer/contract
-yarn install
-```
-
-**Expose buffer functionality**
-
-For testing we need to modify the [dns-js](https://www.npmjs.com/package/dns-js) package to expose `bufferwriter` and  `bufferconsumer` this is done by modifying [index.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/index.js) by editing the file `node_modules/dns-js/lib/index.js` and adding two lines so the file is as follows
-```
-exports.BufferWriter = require('./bufferwriter');
-exports.BufferConsumer = require('./bufferconsumer');
-exports.DNSPacket = require('./dnspacket');
-exports.DNSRecord = require('./dnsrecord');
-exports.errors = require('./errors');
-exports.parse = exports.DNSPacket.parse;
-```
-Also to enable deletion of A records need to modify writeA to return if no ip is passed `if (ip === '') { return; }`
-Code is at `node_modules/dns-js/lib/dnsrecord.js`  function is modified as follows
-```
-function writeA(out, ip) {
-  if (ip === '') { return; }
-  var parts = ip.split('.');
-  for (var i = 0; i < 4; i++) {
-    out.byte(parts[i]);
-  }
-}
-```
-*Note: An alternative to above would be to modify DNSResolver.sol to check for a zero IP address in setDNSRecords*
+Deletion of A records is not supported due to an underlying bug in `dns-js/lib/dnsrecord.js`. This will be fixed later as we fork `dns-js` package.
 
 ## Testing
 
-Test helpers added to package.json
 * `yarn test`: runs all tests 
 * `yarn test-deploy`: tests the deployment of all contracts
-* `yarn test-dns`: tests the reading and writing of dns records
+* `yarn test-dns`: tests the reading and writing of DNS records through DNSResolver contract
 
-Running a functional area by file
-`npx hardhat test ./test/deployment/Deployment.ts`
-
-Running specific tests
+You can run specific tests using:
 
 `npx hardhat test --grep 'permits setting name by owner'`
 
+## About DNS records
 
-## Writing tests
+Please consult with the following references:
 
-We use hardhat, waffle, chai and ethers for testing. 
-Tests are designed to be executed indvidually, as a suite or running all tests.
-As such we take snapshots and revert beforeach test and do any initialization at the functional level.
-
-Following are some useful references
-* [ethers utilities](https://docs.ethers.org/v5/api/utils/): Useful utilties 
-* [Waffle Chai Matchers](https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#): Useful for solidity specific tests.
-* [Chai Assertion Library](https://www.chaijs.com/api/assert/): General assertions, also review [BDD styles expect and should](https://www.chaijs.com/api/assert/)
-* [console.log](https://hardhat.org/hardhat-network/docs/reference#console.log): useful to debug solidity contracts.
-* [ens documentation](https://docs.ens.domains/): useful for understaning functionality being developed
 * [DNS Record Types](https://en.wikipedia.org/wiki/List_of_DNS_record_types): List of all DNS record types
-* [dns-packet](https://www.npmjs.com/package/dns-packet): Good overview of DNS record structures
-* [dns-js](https://www.npmjs.com/package/dns-js): Used for writing DNS records, detailed logic can be found in [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js) 
-
+* [dns-packet](https://www.npmjs.com/package/dns-packet): Overview of DNS record structures
+* [dns-js](https://www.npmjs.com/package/dns-js): Serialization and formatting of DNS records. See also [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js) 
 
 ## Domain Registration
 
