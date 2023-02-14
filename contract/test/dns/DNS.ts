@@ -23,9 +23,9 @@ function makeTestDomains (subdomains: string[], parentDomain: string): [string, 
 const zoneHashWithOffset = (offset: number = 0): string => {
   const r = new Uint8Array(32)
   r[r.length - 1] = offset % 255
-  return Buffer.from(r).toString('hex')
+  return '0x' + Buffer.from(r).toString('hex')
 }
-const ONE_ETH = ethers.utils.parseEther('1')
+
 const TLD = process.env.TLD || 'country'
 
 describe('DNS Tests', function () {
@@ -89,6 +89,7 @@ describe('DNS Tests', function () {
       fuses,
       wrapperExpiry
     )
+    const [base, premium] = await this.registrarController.rentPrice(TestDomain, duration)
     let tx = await this.registrarController.connect(this.alice).commit(commitment)
     await tx.wait()
     tx = await this.registrarController.register(
@@ -102,7 +103,7 @@ describe('DNS Tests', function () {
       fuses,
       wrapperExpiry,
       {
-        value: ONE_ETH.mul(1100)
+        value: base.add(premium)
       }
     )
     await tx.wait()

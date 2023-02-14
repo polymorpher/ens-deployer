@@ -73,7 +73,7 @@ library ENSControllerDeployer {
         registrarController = new RegistrarController(
             baseRegistrar,
             priceOracle,
-            1,
+            0,
             60 * 2,
             reverseRegistrar,
             nameWrapper,

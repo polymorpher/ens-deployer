@@ -12,6 +12,8 @@ export async function prepare (testEnvironment: Context) {
   testEnvironment.carol = testEnvironment.signers[6]
   testEnvironment.dora = testEnvironment.signers[7]
   testEnvironment.ernie = testEnvironment.signers[8]
+  const balances = await Promise.all(testEnvironment.signers.slice(0, 9).map(s => s.getBalance()))
+  console.log('balances:', balances.map(b => ethers.utils.formatEther(b)))
 }
 
 export async function deploy (context, contracts) {
