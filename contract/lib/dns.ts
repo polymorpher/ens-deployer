@@ -43,7 +43,6 @@ export const debugPrintRecord = (record: object, bufferWriter: Buffer) => {
 }
 
 export const encodeRecord = (record: object): EncodedRecord => {
-  console.log(`encodingRecord: ${JSON.stringify(record)}`)
   const buffer = DNSRecord.write(new BufferWriter(), record).dump() as Buffer
   return [buffer.toString('hex'), buffer, record]
 }

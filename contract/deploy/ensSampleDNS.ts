@@ -94,7 +94,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', process.env.PUBLIC_RESOLVER as string)
   const TLD = process.env.TLD || 'country'
   const TLDnode = namehash.hash('')
-  //   const TLDnode = namehash.hash(TLD)
   const FQTLD = TLD + '.'
   const defaultIP = process.env.DEFAULT_IP || '34.120.199.241'
   const initRecAFQDN = dns.encodeARecord(`*.${FQTLD}`, defaultIP)
