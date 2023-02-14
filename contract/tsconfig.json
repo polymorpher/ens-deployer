@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "es2020",
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
@@ -9,6 +9,6 @@
     "resolveJsonModule": true,
     "noImplicitAny": false
   },
-  "include": ["./scripts", "./test", "./deploy", "./typechain", "./hardhat.config.ts", "test/utilities/constants.ts"],
+  "include": ["./scripts", "./test", "./deploy", "./typechain", "./hardhat.config.ts", "./test/utilities", "./lib"],
   "files": ["./hardhat.config.ts"]
 }

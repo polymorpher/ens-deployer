@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-ethers'
 import '@typechain/hardhat'
 import 'hardhat-gas-reporter'
+import 'hardhat-abi-exporter'
 import 'hardhat-deploy'
 import 'solidity-coverage'
 import '@atixlabs/hardhat-time-n-mine'
@@ -28,7 +29,8 @@ const hardhatUserconfig: HardhatUserConfig = {
   networks: {
     hardhat: {
       accounts: {
-        count: 10
+        count: 10,
+        accountsBalance: '1000000000000000000000000'
       },
       mining: {
         auto: true
@@ -37,7 +39,13 @@ const hardhatUserconfig: HardhatUserConfig = {
     },
     local: {
       url: process.env.LOCAL_URL || 'http://localhost:8545',
-      accounts: { mnemonic: process.env.LOCAL_MNEMONIC },
+      accounts: {
+        mnemonic: process.env.LOCAL_MNEMONIC,
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 10,
+        passphrase: ''
+      },
       live: false,
       saveDeployments: false
     },
@@ -79,7 +87,20 @@ const hardhatUserconfig: HardhatUserConfig = {
     artifacts: './build'
   },
   mocha: {
-    timeout: 20000
+    timeout: 60000
+  },
+  abiExporter: {
+    path: './abi',
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    only: [
+      'LengthBasedPriceOracle',
+      'SimpleAssetPriceOracle',
+      'RegistrarController'
+    ],
+    format: 'json',
+    spacing: 2
   },
   contractSizer: {
     alphaSort: true,

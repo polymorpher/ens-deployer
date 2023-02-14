@@ -7,14 +7,13 @@
     },
     "scripts": {
         "compile": "npx hardhat compile",
-        "deploy": "npx hardhat deploy",
-        "test": "npx hardhat test"
+        "deploy": "npx hardhat deploy --tags ENSDeployer",
+        "deploy-dns": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS",
+        "test": "npx hardhat test",
+        "test-deploy": "npx hardhat test ./test/deployment/Deployment.ts",
+        "test-dns": "npx hardhat test ./test/dns/DNS.ts"
     },
     "devDependencies": {
-        "prettier": "^2.6.2",
-        "prettier-plugin-solidity": "^1.0.0-beta.13",
-        "eslint-plugin-prettier": "^4.2.1",
-        "eslint-config-prettier": "^8.5.0",
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",
         "@nomiclabs/hardhat-ethers": "yarn:hardhat-deploy-ethers",
         "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -31,22 +30,30 @@
         "@typescript-eslint/parser": "^4.33.0",
         "bn.js": "^5.2.1",
         "chai": "^4.3.6",
+        "dns-js": "^0.3.1",
         "dotenv": "^16.0.1",
         "eslint": "^7.32.0",
-        "eslint-plugin-n": "^15.5.1",
+        "eslint-config-prettier": "^8.5.0",
         "eslint-config-standard": "^17.0.0",
         "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-n": "^15.5.1",
         "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-promise": "^5.2.0",
+        "eth-ens-namehash": "^2.0.8",
         "ethereum-waffle": "^3.4.4",
         "ethers": "^5.7.0",
         "hardhat": "^2.9.6",
+        "hardhat-abi-exporter": "^2.10.1",
         "hardhat-console": "^1.0.0",
         "hardhat-contract-sizer": "^2.6.1",
         "hardhat-deploy": "^0.11.12",
         "hardhat-gas-reporter": "^1.0.8",
+        "idna-uts46": "^1.1.0",
         "lodash": "^4.17.21",
         "mocha": "^10.0.0",
+        "prettier": "^2.6.2",
+        "prettier-plugin-solidity": "^1.0.0-beta.13",
         "solhint": "^3.3.7",
         "solidity-coverage": "^0.7.21",
         "ts-node": "^10.7.0",
@@ -55,6 +62,6 @@
     },
     "dependencies": {
         "@ensdomains/ens-contracts": "^0.0.15",
-        "bip39": "^3.0.4"
+        "dns-packet": "^5.4.0"
     }
 }

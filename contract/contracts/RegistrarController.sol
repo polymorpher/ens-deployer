@@ -83,14 +83,14 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     }
 
     // @polymorpher: added 2022-02-01, since we are still experimenting with pricing
-    function setPrices(IPriceOracle _prices) public onlyOwner(){
+    function setPrices(IPriceOracle _prices) public onlyOwner {
         address oldAddress = address(prices);
         prices = _prices;
         emit PriceOracleChanged(oldAddress, address(prices));
     }
 
     function valid(string memory name) public pure returns (bool) {
-        return name.strlen() >= 3;
+        return name.strlen() >= 1;
     }
 
     function available(string memory name) public view override returns (bool) {

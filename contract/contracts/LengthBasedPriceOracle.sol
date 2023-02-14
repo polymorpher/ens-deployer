@@ -6,7 +6,7 @@ import "@ensdomains/ens-contracts/contracts/ethregistrar/StringUtils.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-interface AggregatorInterface {
+interface USDOracleInterface {
     function latestAnswer() external view returns (int256);
 }
 
@@ -19,12 +19,12 @@ contract LengthBasedPriceOracle is IPriceOracle {
     uint256 public baseUnitPrice;
 
     // We assume the price oracle will answer with the USD price per unit of native asset (e.g. ONE) multiplied by PRECISION (1e+9). Example: if price of ONE is 0.02, then the answer should be 0.02 * 1e+9 = 2e+7
-    AggregatorInterface public immutable usdOracle;
+    USDOracleInterface public immutable usdOracle;
 
     event PremiumPriceChanged(uint8 length, uint256 oldPrice, uint256 newPrice);
     event BasePriceChanged(uint256 oldPrice, uint256 newPrice);
 
-    constructor(AggregatorInterface _usdOracle, uint256 _baseUnitPrice, uint8[] memory _lengths, uint256[] memory _premiumUnitPrices) {
+    constructor(USDOracleInterface _usdOracle, uint256 _baseUnitPrice, uint8[] memory _lengths, uint256[] memory _premiumUnitPrices) {
         usdOracle = _usdOracle;
         for (uint8 i = 0; i < _lengths.length; i++) {
             premiumUnitPrice[_lengths[i]] = _premiumUnitPrices[i];
@@ -35,10 +35,7 @@ contract LengthBasedPriceOracle is IPriceOracle {
     // returned value is in wei
     function price(string calldata name, uint256 expires, uint256 duration) external view override returns (IPriceOracle.Price memory) {
         uint256 base = baseUnitPrice * duration;
-        return IPriceOracle.Price({
-            base: nanoUsdToWei(base),
-            premium: nanoUsdToWei(premium(name, expires, duration))
-        });
+        return IPriceOracle.Price({base: nanoUsdToWei(base), premium: nanoUsdToWei(premium(name, expires, duration))});
     }
 
     /**
@@ -52,12 +49,12 @@ contract LengthBasedPriceOracle is IPriceOracle {
     // input is in nanoUSD, output is in wei
     function nanoUsdToWei(uint256 amount) public view returns (uint256) {
         uint256 nativeTokenPrice = uint256(usdOracle.latestAnswer());
-        return amount * 1e18 / nativeTokenPrice;
+        return (amount * 1e18) / nativeTokenPrice;
     }
 
     function weiToNanoUsd(uint256 amountWei) public view returns (uint256) {
         uint256 nativeTokenPrice = uint256(usdOracle.latestAnswer());
-        return amountWei * nativeTokenPrice / 1e18;
+        return (amountWei * nativeTokenPrice) / 1e18;
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual returns (bool) {
