@@ -30,35 +30,33 @@ Please consult with the following references:
 
 ## Domain Registration
 
-Example walkthrough for registering "test.country" which will be used next in DNS record mapping
+### Terminologies
 
-For `test.country` registration
-* `country` = TLD
-* `test`  = Tier2
-* `test.` = registerDOMAIN = DOMAIN + '.' //Name used for registration (does not include the TLD)
-  
-For `test.country` DNS updates
-* `0x6ccdbd41a174e9b5e34bffee7b0cc45c3ef17f8763cd491f14bc52dbb550b3b2` = node =
-    ```
-      const parentHash = namehash.hash('country')
-      const childK256 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test.country'))
-      return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
-    ```
-* `test.country.`  = nameDOMAIN = (Tier2 + '.' + TLD + '.')
-*  `0xa96719bd5358231beb1a10bef823abf4d37e428fed2993d459f4e67179238f60` = nameDOMAINHash = ethers.utils.keccak256(dns.dnsName(nameDOMAIN))
-aNameHash: 0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f
-* `a.test.country` = aName = 'a.' + nameDOMAIN //name for a.test.country subdomain
-* `0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f` =  aNameHash = ethers.utils.keccak256(dns.dnsName(aName))
+Using `test.country` as an example:
 
+* `country` is TLD
+* `test` is SLD (second level domain)
+* `test.country.` is FQDN (fully-qualified domain name)
+* "node" of the domain, obtained via [namehash](https://docs.ens.domains/contract-api-reference/name-processing), computed by:
+  ```
+    const parentHash = namehash.hash('country')
+    const childK256 = ethers.utils.id('test.country')
+    return ethers.utils.keccak256(ethers.utils.concat([parentHash, childK256]))
+  ```
+  The example domain's node value is `0x6ccdbd41a174e9b5e34bffee7b0cc45c3ef17f8763cd491f14bc52dbb550b3b2`
+* "domain-hash" of the domain, obtained by computing the keccak256 hash of the RFC1035-encoded DNS-name of the FQDN. See `dnsName` in `lib/dns.ts` for a reference implementation of DNS-name. The example domain's domain-hash is `0xa96719bd5358231beb1a10bef823abf4d37e428fed2993d459f4e67179238f60`
+* "domain-hash" extends to further subdomains. For example, the domain-hash of `a.test.country` is `0x92dce4ed24b46de912a07d01663fe453d2bbbf8c0ee6aae04e97f3179c652d9f`
 
-**Retreiving the owner of the node**
-You can retreive the owner of the node using `await this.ens.owner(node)` where
-* ens: is ENSRegistry.sol
-* node: is calculated for `test.country` as described above
+### (Sub)node Owner
 
-Initially (before registration) this will be the zero address `0x0000000000000000000000000000000000000000`
+In ENS, the owner of a node used to be the user's wallet address. In newer versions, the ownership is instead given to the contract that manages the said domain. For example, ENS uses a ETHRegistrarController to manage registrations, which delegates the management to a NameWrapper contract. Under this setup, the NameWrapper becomes the owner of a node. 
 
-After alice registers `test.country` the owner address will be set to that of the `TLDNameWrapper.sol` e.g. ( `this.nameWrapper.address` = `0xB7aa4c318000BB9bD16108F81C40D02E48af1C42`)
+In our customizations, these contracts are named as RegistrarController and TLDNameWrapper instead, which provide extra functionalities. 
+
+To examine the ownership on ENS registry, you may try using `await this.ens.owner(node)`, where
+
+* `ens` represents a deployed contract instance of ENSRegistry
+* `node` represents the node of domain `test.country`
 
 ## DNS Record Mapping
 
