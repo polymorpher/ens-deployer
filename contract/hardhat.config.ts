@@ -87,7 +87,7 @@ const hardhatUserconfig: HardhatUserConfig = {
     artifacts: './build'
   },
   mocha: {
-    timeout: 20000
+    timeout: 60000
   },
   abiExporter: {
     path: './abi',

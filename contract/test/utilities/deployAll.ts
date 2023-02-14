@@ -1,7 +1,7 @@
 import hre, { ethers } from 'hardhat'
 import DeployENS from '../../deploy/ensDeployer'
 import {
-  AggregatorInterface,
+  USDOracleInterface,
   BaseRegistrarImplementation,
   ENSDeployer,
   ENSRegistry,
@@ -21,7 +21,7 @@ export async function deploy (context: Context) {
   const addresses = await DeployENS(hre)
   context.oracleDeployer = await ethers.getContractAt('OracleDeployer', addresses.OracleDeployer) as OracleDeployer
   context.priceOracle = await ethers.getContractAt('IPriceOracle', addresses.priceOracle) as IPriceOracle
-  context.usdOracle = await ethers.getContractAt('AggregatorInterface', addresses.usdOracle) as AggregatorInterface
+  context.usdOracle = await ethers.getContractAt('USDOracleInterface', addresses.usdOracle) as USDOracleInterface
   context.ensDeployer = await ethers.getContractAt('ENSDeployer', addresses.ENSDeployer) as ENSDeployer
   context.ens = await ethers.getContractAt('ENSRegistry', addresses.ENSRegistry) as ENSRegistry
   context.fifsRegistrar = await ethers.getContractAt('FIFSRegistrar', addresses.FIFSRegistrar) as FIFSRegistrar

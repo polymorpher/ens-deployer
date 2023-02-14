@@ -35,7 +35,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: [TLD, priceOracle],
     log: true,
-    autoMine: true,
+    // autoMine: true,
     libraries: {
       ENSUtils: ENSUtils.address,
       ENSRegistryDeployer: ENSRegistryDeployer.address,

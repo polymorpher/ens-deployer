@@ -1,5 +1,5 @@
 import {
-  AggregatorInterface,
+  USDOracleInterface,
   BaseRegistrarImplementation,
   ENSDeployer,
   ENSRegistry,
@@ -19,7 +19,7 @@ declare module 'mocha' {
     export interface Context {
         oracleDeployer: OracleDeployer
         priceOracle: IPriceOracle
-        usdOracle: AggregatorInterface
+        usdOracle: USDOracleInterface
         ensDeployer: ENSDeployer
         ens: ENSRegistry
         fifsRegistrar: FIFSRegistrar

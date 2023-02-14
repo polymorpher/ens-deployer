@@ -2,6 +2,7 @@
 import { expect } from 'chai'
 import { waffle } from 'hardhat'
 import { Constants, deployAll } from '../utilities'
+import { Context } from 'mocha'
 
 describe('Deployment Tests', function () {
   before(async function () {
@@ -26,7 +27,7 @@ describe('Deployment Tests', function () {
   })
 
   describe('Deployments: Contracts Deployed', function () {
-    it('PR-DEP-0: check the deployed addresses', async function () {
+    it('PR-DEP-0: check the deployed addresses', async function (this: Context) {
       expect(this.oracleDeployer.address).not.to.equal(Constants.ZERO_ADDRESS)
       expect(this.oracleDeployer.address).to.be.properAddress
       expect(this.priceOracle.address).not.to.equal(Constants.ZERO_ADDRESS)
