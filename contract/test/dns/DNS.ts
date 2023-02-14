@@ -3,7 +3,6 @@ import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { Constants, contracts, deployAll, dns } from '../utilities'
 import namehash from 'eth-ens-namehash'
-import '../utilities/types.d'
 import { Context } from 'mocha'
 
 function makeTestDomains (subdomains: string[], parentDomain: string): [string, string][] {

@@ -1,4 +1,5 @@
-import { BufferWriter, DNSRecord } from 'dns-js'
+import { DNSRecord } from 'dns-js'
+import BufferWriter from 'dns-js/lib/bufferwriter'
 
 interface SOARecordValue {
   primary: string
@@ -41,8 +42,8 @@ export const debugPrintRecord = (record: object, bufferWriter: Buffer) => {
   console.log(`recordText: ${bufferWriter.toString('hex')}`)
 }
 
-const encodeRecord = (record: object): EncodedRecord => {
-  const buffer = DNSRecord.write(new BufferWriter(), record).dump()
+export const encodeRecord = (record: object): EncodedRecord => {
+  const buffer = DNSRecord.write(new BufferWriter(), record).dump() as Buffer
   return [buffer.toString('hex'), buffer, record]
 }
 
