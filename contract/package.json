@@ -9,9 +9,9 @@
         "compile": "npx hardhat compile",
         "deploy": "npx hardhat deploy --tags ENSDeployer",
         "deploy-dns": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS",
-        "test": "npx hardhat test",
-        "test-deploy": "npx hardhat test ./test/deployment/Deployment.ts",
-        "test-dns": "npx hardhat test ./test/dns/DNS.ts"
+        "test": "npx hardhat test --network local",
+        "test-deploy": "npx hardhat test --network local --grep 'Deployment'",
+        "test-dns": "npx hardhat test --network local --grep 'DNS'"
     },
     "devDependencies": {
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",

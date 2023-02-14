@@ -1,34 +1,34 @@
 # ens-deployer
 
-ENS Deployer for Harmony
+1NS related contract deployment, customized based on ENS contracts. These contracts are required for `.country` and `.1.country` systems 
 
 ## Quick start
 
-Setup
+1. Setup
+
 ```
-# Setup
 git clone https://github.com/polymorpher/ens-deployer
 cd ens-deployer
 cd contract
-yarn  
+yarn install
 cp env.sample .env
-# Update .env with your testnet and mannet mnemonics"
-cd ..
+# Update .env with your testnet and mainnet mnemonics
 ```
 
-Start ganache locally (terminal window 1)
+2. Start ganache locally
+
 ```
 cd env
 ./ganche-new.sh
 ```
 
-Deploy locally (terminal window 2)
+3. Deploy locally
+
 ```
 cd contract
 yarn deploy
 ```
 
-*Note: The default is to delete the ganache database and not save deployments for the local network. This allows us to start with a fresh local ganache instance each time. We also use a hardcoded mnemonic which is helpful if you want to test integration with metamask as you can set up the wallet once rather than having to setup the metamask wallet each time based on randomly generated accounts*
+*Note: `ganache-new.sh` deletes the database every time it runs, which provides a fresh state. A hard-coded mnemonic is provided, which is also compatible with MetaMask.
 
 * If you want to keep the state of ganache use `./ganache-restart`.
-* If you want to test redeployments locally update `hardhat.config.ts` setting the `local` network to `saveDeployments: true`
