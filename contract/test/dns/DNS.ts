@@ -328,15 +328,15 @@ describe('DNS Tests', function () {
     it('DNS-013 resets dnsRecords on version change', async function (this: Context) {
       await this.publicResolver.connect(this.alice).clearRecords(TestNode)
       expect(
-        await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, 1)).to.equal(
+        await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal(
         '0x'
       )
       expect(
-        await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, 1)).to.equal(
+        await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, Constants.DNSRecordType.A)).to.equal(
         '0x'
       )
       expect(
-        await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, 6)).to.equal(
+        await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal(
         '0x'
       )
     })
