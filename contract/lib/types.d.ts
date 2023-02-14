@@ -12,7 +12,7 @@ import {
   StaticMetadataService,
   TLDNameWrapper,
   UniversalResolver
-} from '../../typechain'
+} from '../typechain'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 declare module 'mocha' {
