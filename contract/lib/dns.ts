@@ -43,12 +43,13 @@ export const debugPrintRecord = (record: object, bufferWriter: Buffer) => {
 }
 
 export const encodeRecord = (record: object): EncodedRecord => {
+  console.log(`encodingRecord: ${JSON.stringify(record)}`)
   const buffer = DNSRecord.write(new BufferWriter(), record).dump() as Buffer
   return [buffer.toString('hex'), buffer, record]
 }
 
 // TODO: buggy for empty ipAddress. Must fix later
-export const encodeARecord = (name: string, ipAddress: string): EncodedRecord => {
+export const encodeARecord = (name: string, ipAddress: string): EncodedRecord[0] => {
   // Sample Mapping
   // a.test.country. 3600 IN A 1.2.3.4
   /*
@@ -61,16 +62,17 @@ export const encodeARecord = (name: string, ipAddress: string): EncodedRecord =>
   // returns 0161047465737407636f756e747279000001000100000e10000401020304
 
   // a empty address is used to remove existing records
-  return encodeRecord({
+  const EncodedRecord = encodeRecord({
     name,
     type: DNSRecord.Type.A,
     class: DNSRecord.Class.IN,
     ttl: 3600,
     address: ipAddress
   })
+  return EncodedRecord[0]
 }
 
-export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord => {
+export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord[0] => {
   // Sample Mapping
   // a.test.country. 3600 IN CNAME harmony.one
   /*
@@ -83,16 +85,17 @@ export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord => 
   // returns 036f6e65047465737407636f756e747279000005000100000e10000d076861726d6f6e79036f6e6500
 
   // a empty address is used to remove existing records
-  return encodeRecord({
+  const EncodedRecord = encodeRecord({
     name,
     type: DNSRecord.Type.CNAME,
     class: DNSRecord.Class.IN,
     ttl: 3600,
     data: rvalue
   })
+  return EncodedRecord[0]
 }
 
-export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRecord => {
+export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRecord[0] => {
   // Sample Mapping
   // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   /*
@@ -109,16 +112,17 @@ export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRe
    minimum: 14400
   */
   // returns  047465737407636f756e747279000006000100000000003a036e73310a636f756e747279646e730378797a000a686f73746d61737465720474657374c00578492cbd00003d0400000708001baf8000003840
-  return encodeRecord({
+  const EncodedRecord = encodeRecord({
     name,
     ttL: 86400,
     type: DNSRecord.Type.SOA,
     class: DNSRecord.Class.IN,
     ...rvalue
   })
+  return EncodedRecord[0]
 }
 
-export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord => {
+export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord[0] => {
   // Sample Mapping
   // test.country. SampleText
   /*
@@ -126,10 +130,11 @@ export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord => {
     data: SampleText
     */
   // returns
-  return encodeRecord({
+  const EncodedRecord = encodeRecord({
     name,
     type: DNSRecord.Type.TXT,
     class: DNSRecord.Class.IN,
     data: rvalue
   })
+  return EncodedRecord[0]
 }
