@@ -3862,10 +3862,9 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dns-js@^0.3.1:
+"dns-js@git+https://github.com/polymorpher/node-dns-js":
   version "0.3.1"
-  resolved "https://registry.yarnpkg.com/dns-js/-/dns-js-0.3.1.tgz#d4ce21af5cd7b0aade41447f0b7e55c22f409f3d"
-  integrity sha512-+Ih53426tx2Swgd6exQ0eYtnnBH8m0tX67ZEYLDrhzw4ydZeHvPX+jLRp1EmRsrn6owVftXhFCVkiLgchD4mIg==
+  resolved "git+https://github.com/polymorpher/node-dns-js#86a770ca5535fa4447e626a0ac14ddde32de64fb"
   dependencies:
     debug "^2.1.0"
     qap "^3.1.2"

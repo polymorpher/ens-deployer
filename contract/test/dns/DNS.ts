@@ -199,10 +199,9 @@ describe('DNS Tests', function () {
       const rec2 = '0x' + cRec2
       await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, rec2)
 
-      // TODO: fork dns-js and fix the bug for encoding empty A record. See comment on https://github.com/polymorpher/ens-deployer/pull/6/files#r1105393215
       // Removal returns to 0
-      // hasEntries = await this.publicResolver.hasDNSRecords(TestNode, TestSubdomainCDnsHash)
-      // expect(hasEntries, 'TestSubdomainC should not have DNS entry').to.be.false
+      hasEntries = await this.publicResolver.hasDNSRecords(TestNode, TestSubdomainCDnsHash)
+      expect(hasEntries, 'TestSubdomainC should not have DNS entry').to.be.false
     })
 
     it('DNS-004 should handle single-record updates', async function (this: Context) {
