@@ -117,5 +117,3 @@ caa                         IN  CAA     0 issue letsencrypt.org
                             IN  MX      10 aspmx2.googlemail.com.
                             IN  MX      10 aspmx3.googlemail.com.
 ```
-
-**Sample zone file for .country**
