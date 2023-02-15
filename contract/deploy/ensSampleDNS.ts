@@ -52,27 +52,23 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   )).wait()
   console.log(`Registered: ${domain}`, txr.transactionHash)
 
-  // Set default A records for domain and a.domain
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', PUBLIC_RESOLVER)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
-  const initRecFQDN = dns.encodeARecord(FQDN, ip)
-  const aNameFQDN = 'a.' + FQDN
-  const initRecAFQDN = dns.encodeARecord(aNameFQDN, ip)
-  // Set CNAME Record for one.domain
-  const oneNameFQDN = 'one.' + FQDN
-  const initRecCNAMEFQDN = dns.encodeCNAMERecord(oneNameFQDN, 'harmony.one')
+  const [SldRecord] = dns.encodeARecord(FQDN, ip)
+  const [SubdomainAARecord] = dns.encodeARecord('a.' + FQDN, ip)
+  const [SubdomainOneCnameRecord] = dns.encodeCNAMERecord('one.' + FQDN, 'harmony.one')
   // Set Initial DNS entries
-  const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
-  txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
-  console.log(`setDNSRecords ${txr.transactionHash}`)
+  const fullRecord = '0x' + SldRecord + SubdomainAARecord + SubdomainOneCnameRecord
+  txr = await (await publicResolver.connect(owner).setDNSRecords(node, fullRecord)).wait()
+  console.log(`setDNSRecords: ${txr.transactionHash}`)
   // Set initial zonehash
   txr = await (await publicResolver.connect(owner).setZonehash(
     node,
     '0x0000000000000000000000000000000000000000000000000000000000000001'
   )).wait()
-  console.log(`Created records for: ${domain + '.' + TLD} and ${aNameFQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
+  console.log(`Created records for: ${domain + '.' + TLD} and a.${FQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
 }
 
 const f = async function (hre: HardhatRuntimeEnvironment) {
