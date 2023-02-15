@@ -54,7 +54,15 @@ export interface SOARecordValue {
     expiration: number
     minimum: number
   }
-  // TODO: define members of object for each type of record
+
+export interface SRVRecordValue {
+    priority: number
+    weight: number
+    port: number
+    target: string
+  }
+
+// TODO: define members of object for each type of record
 export type EncodedRecord = [string, Buffer, object]
 
 export interface ARecord {
@@ -67,9 +75,24 @@ export interface CNAMERecord {
     cname: string;
   }
 
+export interface DNAMERecord {
+    name: string;
+    dname: string;
+  }
+
+export interface NSRecord {
+    name: string;
+    nsname: string;
+  }
+
 export interface SOARecord {
     name: string;
     rvalue: SOARecordValue;
+  }
+
+export interface SRVRecord {
+    name: string;
+    rvalue: SRVRecordValue;
   }
 
 export interface TXTRecord {

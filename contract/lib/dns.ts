@@ -1,6 +1,6 @@
-import { DNSRecord } from '1ns-dns-js'
-import BufferWriter from '1ns-dns-js/lib/bufferwriter'
-import type { EncodedRecord, ARecord, CNAMERecord, SOARecord, TXTRecord } from './types.d'
+import { DNSRecord } from 'dns-js'
+import BufferWriter from 'dns-js/lib/bufferwriter'
+import type { EncodedRecord, ARecord, CNAMERecord, DNAMERecord, NSRecord, SOARecord, SRVRecord, TXTRecord } from './types.d'
 
 // name is a FQDN with or without trailing dot
 // output is the encoding per RFC1035 https://www.ietf.org/rfc/rfc1035.txt
@@ -81,6 +81,50 @@ export const encodeCNAMERecord = (cnameRecord: CNAMERecord): EncodedRecord => {
   })
 }
 
+export const encodeDNAMERecord = (dnameRecord: DNAMERecord): EncodedRecord => {
+  // Sample Mapping
+  // docs.test.country. 3600 IN CNAME docs.harmony.one
+  /*
+      name: a.test.country
+      type: CNAME
+      class: IN
+      ttl: 3600
+      data: harmony.one
+    */
+  // returns 04646f6373047465737407636f756e747279000027000100000e10001204646f6373076861726d6f6e79036f6e6500
+
+  // a empty address is used to remove existing records
+  return encodeRecord({
+    name: dnameRecord.name,
+    type: DNSRecord.Type.DNAME,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    data: dnameRecord.dname
+  })
+}
+
+export const encodeNSRecord = (nsnameRecord: NSRecord): EncodedRecord => {
+  // Sample Mapping
+  // country. 3600 IN NS ns3.hiddenstate.xyz
+  /*
+        name: country.
+        type: CNAME
+        class: IN
+        ttl: 3600
+        data: ns3.hiddenstate.xyz
+      */
+  // returns 07636f756e747279000027000100000e100015036e73330b68696464656e73746174650378797a00
+
+  // a empty address is used to remove existing records
+  return encodeRecord({
+    name: nsnameRecord.name,
+    type: DNSRecord.Type.DNAME,
+    class: DNSRecord.Class.IN,
+    ttl: 3600,
+    data: nsnameRecord.nsname
+  })
+}
+
 export const encodeSOARecord = (soaRecord: SOARecord): EncodedRecord => {
   // Sample Mapping
   // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
@@ -104,6 +148,28 @@ export const encodeSOARecord = (soaRecord: SOARecord): EncodedRecord => {
     type: DNSRecord.Type.SOA,
     class: DNSRecord.Class.IN,
     ...soaRecord.rvalue
+  })
+}
+
+export const encodeSRVRecord = (srvRecord: SRVRecord): EncodedRecord => {
+  // Sample Mapping
+  // srv    IN SRV 10 10 8080 srv.test.country.
+  /*
+    name: srv
+    class: IN
+    type: SRV
+    priority: 10,
+    weight: 10,
+    port: 8080,
+    target: 'srv.test.country.'
+    */
+  // returns  037372760000210001000000000018000a000a1f9003737276047465737407636f756e74727900
+  return encodeRecord({
+    name: srvRecord.name,
+    ttL: 86400,
+    type: DNSRecord.Type.SRV,
+    class: DNSRecord.Class.IN,
+    ...srvRecord.rvalue
   })
 }
 

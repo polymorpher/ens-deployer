@@ -62,9 +62,28 @@ describe('DNS Tests', function () {
     expiration: 1814400,
     minimum: 14400
   }
+  const DefaultSrv = {
+    priority: 10,
+    weight: 10,
+    port: 8080,
+    target: 'srv.test.country.'
+  }
   const [InitialSoaRecord] = dns.encodeSOARecord({ name: TestDomainFqdn, rvalue: DefaultSoa })
-  const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: 'one.test.country', cname: 'harmony.one' })
-  const InitialFullDnsRecord = '0x' + TestSubdomainAInitialRecord + TestSubdomainBInitialRecord1 + TestSubdomainBInitialRecord2 + InitialSoaRecord + TestSubdomainOneInitialCnameRecord
+  const [InitialSrvRecord] = dns.encodeSRVRecord({ name: 'srv', rvalue: DefaultSrv })
+  const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: 'one.test.country.', cname: 'harmony.one' })
+  const [TestSubdomainOneInitialCnameRecord2] = dns.encodeCNAMERecord({ name: 'www', cname: 'test.country' })
+  const [TestSubdomainOneInitialDnameRecord] = dns.encodeDNAMERecord({ name: 'docs.test.country.', dname: 'docs.harmony.one' })
+  const [TestSubdomainOneInitialNSnameRecord] = dns.encodeNSRecord({ name: 'country.', nsname: 'ns3.hiddenstate.xyz' })
+  const InitialFullDnsRecord = '0x' +
+    TestSubdomainAInitialRecord +
+    TestSubdomainBInitialRecord1 +
+    TestSubdomainBInitialRecord2 +
+    TestSubdomainOneInitialCnameRecord +
+    TestSubdomainOneInitialCnameRecord2 +
+    TestSubdomainOneInitialDnameRecord +
+    TestSubdomainOneInitialNSnameRecord +
+    InitialSoaRecord +
+    InitialSrvRecord
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
@@ -108,11 +127,11 @@ describe('DNS Tests', function () {
     )
     await tx.wait()
     // Set Initial DNS entries
-    console.log('Initializing a.test.country')
-    console.log(`node: test.country; hash: ${TestNode}`)
-    console.log(`Initial A record for: ${'0x' + TestSubdomainAInitialRecord}`)
-    tx = await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, '0x' + TestSubdomainAInitialRecord)
-    await tx.wait()
+    // console.log('Initializing a.test.country')
+    // console.log(`node: test.country; hash: ${TestNode}`)
+    // console.log(`Initial A record for: ${'0x' + TestSubdomainAInitialRecord}`)
+    // tx = await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, '0x' + TestSubdomainAInitialRecord)
+    // await tx.wait()
     tx = await this.publicResolver.connect(this.alice).setDNSRecords(TestNode, InitialFullDnsRecord)
     await tx.wait()
     // Set initial zonehash

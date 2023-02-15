@@ -64,7 +64,43 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   const oneNameFQDN = 'one.' + FQDN
   const [initRecCNAMEFQDN] = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
   // Set Initial DNS entries
-  const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
+  let initRec
+  // set all records for test domain and less for other domains
+  if (domain === 'test') {
+    const DefaultSoa = {
+      primary: 'ns1.countrydns.xyz.',
+      admin: 'hostmaster.test.country',
+      serial: 2018061501,
+      refresh: 15620,
+      retry: 1800,
+      expiration: 1814400,
+      minimum: 14400
+    }
+    const DefaultSrv = {
+      priority: 10,
+      weight: 10,
+      port: 8080,
+      target: 'srv.test.country.'
+    }
+    const [InitialSoaRecord] = dns.encodeSOARecord({ name: FQDN, rvalue: DefaultSoa })
+    const [InitialSrvRecord] = dns.encodeSRVRecord({ name: 'srv', rvalue: DefaultSrv })
+    const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: 'one.test.country.', cname: 'harmony.one' })
+    const [TestSubdomainOneInitialCnameRecord2] = dns.encodeCNAMERecord({ name: 'www', cname: 'test.country' })
+    const [TestSubdomainOneInitialDnameRecord] = dns.encodeDNAMERecord({ name: 'docs.test.country.', dname: 'docs.harmony.one' })
+    const [TestSubdomainOneInitialNSnameRecord] = dns.encodeNSRecord({ name: 'country.', nsname: 'ns3.hiddenstate.xyz' })
+    initRec = '0x' +
+        initRecFQDN +
+        initRecAFQDN +
+        initRecCNAMEFQDN +
+        TestSubdomainOneInitialCnameRecord +
+        TestSubdomainOneInitialCnameRecord2 +
+        TestSubdomainOneInitialDnameRecord +
+        TestSubdomainOneInitialNSnameRecord +
+        InitialSoaRecord +
+        InitialSrvRecord
+  } else {
+    initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
+  }
   txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
   console.log(`setDNSRecords ${txr.transactionHash}`)
   // Set initial zonehash
@@ -86,7 +122,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
   const signers = await ethers.getSigners()
   const alice = signers[4]
-  console.log(`alice.address: ${alice.address}`)
   const bob = signers[5]
 
   // Register Domains

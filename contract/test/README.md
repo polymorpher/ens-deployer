@@ -8,7 +8,7 @@ As of now, only A, SOA, TXT records are tested. We will extend for more later.
 
 ## Known issues
 
-Deletion of A records is supported via [1ns-ds-js](https://www.npmjs.com/package/1ns-dns-js) a modified version of dns-js which handles the passing of null IP addresses.
+Deletion of A records is supported via [dns-js](https://github.com/polymorpher/node-dns-js) a modified version of dns-js which handles the passing of null IP addresses.
 
 ## Testing
 
@@ -26,7 +26,7 @@ Please consult with the following references:
 
 * [DNS Record Types](https://en.wikipedia.org/wiki/List_of_DNS_record_types): List of all DNS record types
 * [dns-packet](https://www.npmjs.com/package/dns-packet): Overview of DNS record structures
-* [1ns-dns-js](https://www.npmjs.com/package/1ns-dns-js): Serialization and formatting of DNS records. See also [dnsrecord.js](https://github.com/jw-1ns/node-dns-js/blob/master/lib/dnsrecord.js) 
+* [dns-js](https://github.com/polymorpher/node-dns-js): Serialization and formatting of DNS records. See also [dnsrecord.js](https://github.com/polymorpher/node-dns-js/blob/master/lib/dnsrecord.js) 
 
 ## Domain Registration
 
@@ -86,3 +86,36 @@ country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15
   * `01020304`: value (IP Address)
 
 Using RRIterator, records such as the above can be identified using offset in the iteration, and length-value of each record encoded as part of the data
+
+
+## Appendices
+
+### Apendix A - Sample DNS Records for a domain
+
+Following is a subset of [DNS Record Types](https://en.wikipedia.org/wiki/List_of_DNS_record_types) and their support status.
+
+**Records currently supported**
+```
+test.country.       3600    IN  A       1.2.3.4
+a.test.country.     3600    IN  A       1.2.3.5
+www                 3600    IN  CNAME   .country.
+one.test.country.   3600    IN  CNAME   harmony.one
+docs.test.country.  3600    IN  DNAME   docs.harmony.one
+country.            86400   IN  SOA     ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
+country.                    IN  NS      ns3.hiddenstate.xyz
+srv		            3600    IN	SRV     10 10 8080 srv.test.country.
+
+```
+
+**Records not currently supported**
+```
+		                    IN  AAAA    2a01:7e00::f03c:91ff:fef1:6735
+caa                         IN  CAA     0 issue letsencrypt.org
+                            IN  MX      1  aspmx.l.google.com.
+                            IN  MX      5  alt1.aspmx.l.google.com.
+                            IN  MX      5  alt2.aspmx.l.google.com.
+                            IN  MX      10 aspmx2.googlemail.com.
+                            IN  MX      10 aspmx3.googlemail.com.
+```
+
+**Sample zone file for .country**
