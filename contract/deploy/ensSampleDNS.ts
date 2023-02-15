@@ -57,12 +57,12 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
-  const initRecFQDN = dns.encodeARecord({ name: FQDN, ipAddress: ip })
+  const [initRecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
   const aNameFQDN = 'a.' + FQDN
-  const initRecAFQDN = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
+  const [initRecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
   // Set CNAME Record for one.domain
   const oneNameFQDN = 'one.' + FQDN
-  const initRecCNAMEFQDN = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
+  const [initRecCNAMEFQDN] = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
   // Set Initial DNS entries
   const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
   txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
@@ -88,18 +88,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const alice = signers[4]
   console.log(`alice.address: ${alice.address}`)
   const bob = signers[5]
-
-  // Set DEFAULT IP for zones
-  const deployer = signers[0]
-  const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', process.env.PUBLIC_RESOLVER as string)
-  const TLD = process.env.TLD || 'country'
-  const TLDnode = namehash.hash('')
-  const FQTLD = TLD + '.'
-  const defaultIP = process.env.DEFAULT_IP || '34.120.199.241'
-  const initRecAFQDN = dns.encodeARecord({ name: `*.${FQTLD}`, ipAddress: defaultIP })
-  const initRec = '0x' + initRecAFQDN
-  const tx = await publicResolver.connect(deployer).setDNSRecords(TLDnode, initRec)
-  await tx.wait()
 
   // Register Domains
   await registerDomain('test', alice, '128.0.0.1')

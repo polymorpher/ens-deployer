@@ -55,11 +55,7 @@ export interface SOARecordValue {
     minimum: number
   }
   // TODO: define members of object for each type of record
-export interface EncodedRecord {
-    hexString: string,
-    buffer: Buffer,
-    record: object
-  }
+export type EncodedRecord = [string, Buffer, object]
 
 export interface ARecord {
     name: string;
