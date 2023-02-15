@@ -1,17 +1,6 @@
 import { DNSRecord } from 'dns-js'
 import BufferWriter from 'dns-js/lib/bufferwriter'
-
-interface SOARecordValue {
-  primary: string
-  admin: string
-  serial: number
-  refresh: number
-  retry: number
-  expiration: number
-  minimum: number
-}
-// TODO: define members of object for each type of record
-type EncodedRecord = [string, Buffer, object]
+import type { EncodedRecord, ARecord, CNAMERecord, SOARecord, TXTRecord } from './types.d.ts'
 
 // name is a FQDN with or without trailing dot
 // output is the encoding per RFC1035 https://www.ietf.org/rfc/rfc1035.txt
@@ -44,11 +33,11 @@ export const debugPrintRecord = (record: object, bufferWriter: Buffer) => {
 
 export const encodeRecord = (record: object): EncodedRecord => {
   const buffer = DNSRecord.write(new BufferWriter(), record).dump() as Buffer
-  return [buffer.toString('hex'), buffer, record]
+  return { hexString: buffer.toString('hex'), buffer, record }
 }
 
 // TODO: buggy for empty ipAddress. Must fix later
-export const encodeARecord = (name: string, ipAddress: string): EncodedRecord[0] => {
+export const encodeARecord = (aRecord: ARecord): EncodedRecord['hexString'] => {
   // Sample Mapping
   // a.test.country. 3600 IN A 1.2.3.4
   /*
@@ -62,16 +51,16 @@ export const encodeARecord = (name: string, ipAddress: string): EncodedRecord[0]
 
   // a empty address is used to remove existing records
   const EncodedRecord = encodeRecord({
-    name,
+    name: aRecord.name,
     type: DNSRecord.Type.A,
     class: DNSRecord.Class.IN,
     ttl: 3600,
-    address: ipAddress
+    address: aRecord.ipAddress
   })
-  return EncodedRecord[0]
+  return EncodedRecord.hexString
 }
 
-export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord[0] => {
+export const encodeCNAMERecord = (cnameRecord: CNAMERecord): EncodedRecord['hexString'] => {
   // Sample Mapping
   // a.test.country. 3600 IN CNAME harmony.one
   /*
@@ -85,16 +74,16 @@ export const encodeCNAMERecord = (name:string, rvalue:string): EncodedRecord[0] 
 
   // a empty address is used to remove existing records
   const EncodedRecord = encodeRecord({
-    name,
+    name: cnameRecord.name,
     type: DNSRecord.Type.CNAME,
     class: DNSRecord.Class.IN,
     ttl: 3600,
-    data: rvalue
+    data: cnameRecord.cname
   })
-  return EncodedRecord[0]
+  return EncodedRecord.hexString
 }
 
-export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRecord[0] => {
+export const encodeSOARecord = (soaRecord: SOARecord): EncodedRecord['hexString'] => {
   // Sample Mapping
   // test.country. 86400 IN SOA ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
   /*
@@ -112,16 +101,16 @@ export const encodeSOARecord = (name: string, rvalue: SOARecordValue): EncodedRe
   */
   // returns  047465737407636f756e747279000006000100000000003a036e73310a636f756e747279646e730378797a000a686f73746d61737465720474657374c00578492cbd00003d0400000708001baf8000003840
   const EncodedRecord = encodeRecord({
-    name,
+    name: soaRecord.name,
     ttL: 86400,
     type: DNSRecord.Type.SOA,
     class: DNSRecord.Class.IN,
-    ...rvalue
+    ...soaRecord.rvalue
   })
-  return EncodedRecord[0]
+  return EncodedRecord.hexString
 }
 
-export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord[0] => {
+export const encodeTXTRecord = (txtRecord: TXTRecord): EncodedRecord['hexString'] => {
   // Sample Mapping
   // test.country. SampleText
   /*
@@ -130,10 +119,10 @@ export const encodeTXTRecord = (name:string, rvalue:string): EncodedRecord[0] =>
     */
   // returns
   const EncodedRecord = encodeRecord({
-    name,
+    name: txtRecord.name,
     type: DNSRecord.Type.TXT,
     class: DNSRecord.Class.IN,
-    data: rvalue
+    data: txtRecord.text
   })
-  return EncodedRecord[0]
+  return EncodedRecord.hexString
 }

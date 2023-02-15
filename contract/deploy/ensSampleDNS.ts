@@ -57,12 +57,12 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
-  const initRecFQDN = dns.encodeARecord(FQDN, ip)
+  const initRecFQDN = dns.encodeARecord({ name: FQDN, ipAddress: ip })
   const aNameFQDN = 'a.' + FQDN
-  const initRecAFQDN = dns.encodeARecord(aNameFQDN, ip)
+  const initRecAFQDN = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
   // Set CNAME Record for one.domain
   const oneNameFQDN = 'one.' + FQDN
-  const initRecCNAMEFQDN = dns.encodeCNAMERecord(oneNameFQDN, 'harmony.one')
+  const initRecCNAMEFQDN = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
   // Set Initial DNS entries
   const initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
   txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
@@ -96,7 +96,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const TLDnode = namehash.hash('')
   const FQTLD = TLD + '.'
   const defaultIP = process.env.DEFAULT_IP || '34.120.199.241'
-  const initRecAFQDN = dns.encodeARecord(`*.${FQTLD}`, defaultIP)
+  const initRecAFQDN = dns.encodeARecord({ name: `*.${FQTLD}`, ipAddress: defaultIP })
   const initRec = '0x' + initRecAFQDN
   const tx = await publicResolver.connect(deployer).setDNSRecords(TLDnode, initRec)
   await tx.wait()
