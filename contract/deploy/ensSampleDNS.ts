@@ -76,30 +76,23 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
 }
 
 const f = async function (hre: HardhatRuntimeEnvironment) {
-  // Add some records for local testing (used by go-1ns)
+  // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local') {
     throw new Error('Should only deploy sample DNS registration in local network')
   }
   console.log(`about to registerDomain in network: ${hre.network.name}`)
-  // Note we pass a signer object in and use owner.address in the registration calls
-  // We have set up local to use 10 accounts from a mnemonic
-  // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
+  // The 10 signer accounts represent: deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
   const signers = await ethers.getSigners()
   const alice = signers[4]
-  console.log(`alice.address: ${alice.address}`)
   const bob = signers[5]
 
   // Set DEFAULT IP for zones
   const deployer = signers[0]
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', process.env.PUBLIC_RESOLVER as string)
   const TLD = process.env.TLD || 'country'
-  const TLDnode = namehash.hash(TLD)
-  const FQTLD = TLD + '.'
-  const defaultIP = process.env.DEFAULT_IP || '34.120.199.241'
-  const initRecAFQDN = dns.encodeARecord(`*.${FQTLD}`, defaultIP)
-  const initRec = '0x' + initRecAFQDN
-  const tx = await publicResolver.connect(deployer).setDNSRecords(TLDnode, initRec)
-  await tx.wait()
+  const defaultIp = process.env.DEFAULT_IP || '34.120.199.241'
+  const [aRecord] = dns.encodeARecord(`*.${TLD}.`, defaultIp)
+  await (await publicResolver.connect(deployer).setDNSRecords(namehash.hash(''), '0x' + aRecord)).wait()
 
   // Register Domains
   await registerDomain('test', alice, '128.0.0.1')
