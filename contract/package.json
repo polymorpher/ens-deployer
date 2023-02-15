@@ -14,6 +14,7 @@
         "test-dns": "npx hardhat test --network local --grep 'DNS'"
     },
     "devDependencies": {
+        "1ns-dns-js": "^0.1.0",
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",
         "@nomiclabs/hardhat-ethers": "yarn:hardhat-deploy-ethers",
         "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -30,7 +31,6 @@
         "@typescript-eslint/parser": "^4.33.0",
         "bn.js": "^5.2.1",
         "chai": "^4.3.6",
-        "dns-js": "^0.3.1",
         "dotenv": "^16.0.1",
         "eslint": "^7.32.0",
         "eslint-config-prettier": "^8.5.0",

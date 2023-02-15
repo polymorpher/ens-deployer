@@ -8,7 +8,7 @@ As of now, only A, SOA, TXT records are tested. We will extend for more later.
 
 ## Known issues
 
-Deletion of A records is not supported due to an underlying bug in `dns-js/lib/dnsrecord.js`. This will be fixed later as we fork `dns-js` package.
+Deletion of A records is supported via [1ns-ds-js](https://www.npmjs.com/package/1ns-dns-js) a modified version of dns-js which handles the passing of null IP addresses.
 
 ## Testing
 
@@ -26,7 +26,7 @@ Please consult with the following references:
 
 * [DNS Record Types](https://en.wikipedia.org/wiki/List_of_DNS_record_types): List of all DNS record types
 * [dns-packet](https://www.npmjs.com/package/dns-packet): Overview of DNS record structures
-* [dns-js](https://www.npmjs.com/package/dns-js): Serialization and formatting of DNS records. See also [dnsrecord.js](https://github.com/mdns-js/node-dns-js/blob/master/lib/dnsrecord.js) 
+* [1ns-dns-js](https://www.npmjs.com/package/1ns-dns-js): Serialization and formatting of DNS records. See also [dnsrecord.js](https://github.com/jw-1ns/node-dns-js/blob/master/lib/dnsrecord.js) 
 
 ## Domain Registration
 

@@ -1,5 +1,5 @@
-import { DNSRecord } from 'dns-js'
-import BufferWriter from 'dns-js/lib/bufferwriter'
+import { DNSRecord } from '1ns-dns-js'
+import BufferWriter from '1ns-dns-js/lib/bufferwriter'
 import type { EncodedRecord, ARecord, CNAMERecord, SOARecord, TXTRecord } from './types.d.ts'
 
 // name is a FQDN with or without trailing dot

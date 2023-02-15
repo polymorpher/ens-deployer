@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"1ns-dns-js@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/1ns-dns-js/-/1ns-dns-js-0.1.0.tgz#b8e8350b96baa3bd5c80a24241dc06c6d2e15c06"
+  integrity sha512-keT704SSHpl1CelAxj4BE4i917NaawPl6Bez7elbOJEjeTQAwb9VQDLnQskLsdhpLLcyLSHAg2o3CwLY4Z5QjQ==
+  dependencies:
+    debug "^2.1.0"
+    qap "^3.1.2"
+
 "@atixlabs/hardhat-time-n-mine@^0.0.5":
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/@atixlabs/hardhat-time-n-mine/-/hardhat-time-n-mine-0.0.5.tgz#a7956f6f81ae431472d3763303b9cfc7b3040a97"
@@ -3861,14 +3869,6 @@ dir-glob@^3.0.1:
   integrity sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==
   dependencies:
     path-type "^4.0.0"
-
-dns-js@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/dns-js/-/dns-js-0.3.1.tgz#d4ce21af5cd7b0aade41447f0b7e55c22f409f3d"
-  integrity sha512-+Ih53426tx2Swgd6exQ0eYtnnBH8m0tX67ZEYLDrhzw4ydZeHvPX+jLRp1EmRsrn6owVftXhFCVkiLgchD4mIg==
-  dependencies:
-    debug "^2.1.0"
-    qap "^3.1.2"
 
 dns-packet@^5.3.0, dns-packet@^5.4.0:
   version "5.4.0"
