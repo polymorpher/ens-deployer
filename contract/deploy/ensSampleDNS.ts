@@ -56,13 +56,52 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
-  const [SldRecord] = dns.encodeARecord(FQDN, ip)
-  const [SubdomainAARecord] = dns.encodeARecord('a.' + FQDN, ip)
-  const [SubdomainOneCnameRecord] = dns.encodeCNAMERecord('one.' + FQDN, 'harmony.one')
+  const [initARecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
+  const aNameFQDN = 'a.' + FQDN
+  const [initARecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
+  // Set CNAME Record for one.domain
+  const oneNameFQDN = 'one.' + FQDN
+  const [initCnameRecOneFQDN] = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
   // Set Initial DNS entries
-  const fullRecord = '0x' + SldRecord + SubdomainAARecord + SubdomainOneCnameRecord
-  txr = await (await publicResolver.connect(owner).setDNSRecords(node, fullRecord)).wait()
-  console.log(`setDNSRecords: ${txr.transactionHash}`)
+  let initRec
+  // set all records for test domain and less for other domains
+  if (domain === 'test') {
+    const DefaultSoa = {
+      primary: 'ns1.countrydns.xyz.',
+      admin: 'hostmaster.test.country',
+      serial: 2018061501,
+      refresh: 15620,
+      retry: 1800,
+      expiration: 1814400,
+      minimum: 14400
+    }
+    const DefaultSrv = {
+      priority: 10,
+      weight: 10,
+      port: 8080,
+      target: 'srv.test.country.'
+    }
+    const [initSoaRec] = dns.encodeSOARecord({ name: FQDN, rvalue: DefaultSoa })
+    const [initSrvRec] = dns.encodeSRVRecord({ name: 'srv.' + FQDN, rvalue: DefaultSrv })
+    const [initCnameRecWWW] = dns.encodeCNAMERecord({ name: 'www.' + FQDN, cname: 'test.country' })
+    const [initDnameRec] = dns.encodeDNAMERecord({ name: 'docs.' + FQDN, dname: 'docs.harmony.one' })
+    const [initNsRec] = dns.encodeNSRecord({ name: FQDN, nsname: 'ns3.hiddenstate.xyz' })
+    const [initTxtRec] = dns.encodeTXTRecord({ name: FQDN, text: 'magic' })
+    initRec = '0x' +
+        initARecFQDN +
+        initARecAFQDN +
+        initCnameRecOneFQDN +
+        initCnameRecWWW +
+        initDnameRec +
+        initNsRec +
+        initSoaRec +
+        initSrvRec +
+        initTxtRec
+  } else {
+    initRec = '0x' + initARecFQDN + initARecAFQDN + initCnameRecOneFQDN
+  }
+  txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
+  console.log(`setDNSRecords ${txr.transactionHash}`)
   // Set initial zonehash
   txr = await (await publicResolver.connect(owner).setZonehash(
     node,
@@ -81,14 +120,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   const signers = await ethers.getSigners()
   const alice = signers[4]
   const bob = signers[5]
-
-  // Set DEFAULT IP for zones
-  const deployer = signers[0]
-  const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', process.env.PUBLIC_RESOLVER as string)
-  const TLD = process.env.TLD || 'country'
-  const defaultIp = process.env.DEFAULT_IP || '34.120.199.241'
-  const [aRecord] = dns.encodeARecord(`*.${TLD}.`, defaultIp)
-  await (await publicResolver.connect(deployer).setDNSRecords(namehash.hash(''), '0x' + aRecord)).wait()
 
   // Register Domains
   await registerDomain('test', alice, '128.0.0.1')

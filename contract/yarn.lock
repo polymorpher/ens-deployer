@@ -3864,7 +3864,7 @@ dir-glob@^3.0.1:
 
 "dns-js@git+https://github.com/polymorpher/node-dns-js":
   version "0.3.1"
-  resolved "git+https://github.com/polymorpher/node-dns-js#86a770ca5535fa4447e626a0ac14ddde32de64fb"
+  resolved "git+https://github.com/polymorpher/node-dns-js#a19db9d70225349978ce0c84cadc9344ea5a8828"
   dependencies:
     debug "^2.1.0"
     qap "^3.1.2"
