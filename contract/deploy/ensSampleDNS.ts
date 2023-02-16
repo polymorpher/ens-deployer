@@ -52,7 +52,6 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   )).wait()
   console.log(`Registered: ${domain}`, txr.transactionHash)
 
-  // Set default A records for domain and a.domain
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', PUBLIC_RESOLVER)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
@@ -108,18 +107,16 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
     node,
     '0x0000000000000000000000000000000000000000000000000000000000000001'
   )).wait()
-  console.log(`Created records for: ${domain + '.' + TLD} and ${aNameFQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
+  console.log(`Created records for: ${domain + '.' + TLD} and a.${FQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
 }
 
 const f = async function (hre: HardhatRuntimeEnvironment) {
-  // Add some records for local testing (used by go-1ns)
+  // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local') {
     throw new Error('Should only deploy sample DNS registration in local network')
   }
   console.log(`about to registerDomain in network: ${hre.network.name}`)
-  // Note we pass a signer object in and use owner.address in the registration calls
-  // We have set up local to use 10 accounts from a mnemonic
-  // Logically the 10 accounts represent, deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
+  // The 10 signer accounts represent: deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
   const signers = await ethers.getSigners()
   const alice = signers[4]
   const bob = signers[5]
