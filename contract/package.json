@@ -30,7 +30,7 @@
         "@typescript-eslint/parser": "^4.33.0",
         "bn.js": "^5.2.1",
         "chai": "^4.3.6",
-        "dns-js": "git+https://github.com/jw-1ns/node-dns-js",
+        "dns-js": "git+https://github.com/polymorpher/node-dns-js",
         "dotenv": "^16.0.1",
         "eslint": "^7.32.0",
         "eslint-config-prettier": "^8.5.0",
