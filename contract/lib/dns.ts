@@ -118,7 +118,7 @@ export const encodeNSRecord = (nsnameRecord: NSRecord): EncodedRecord => {
   // a empty address is used to remove existing records
   return encodeRecord({
     name: nsnameRecord.name,
-    type: DNSRecord.Type.DNAME,
+    type: DNSRecord.Type.NS,
     class: DNSRecord.Class.IN,
     ttl: 3600,
     data: nsnameRecord.nsname

@@ -104,6 +104,7 @@ docs.test.country.  3600    IN  DNAME   docs.harmony.one
 country.            86400   IN  SOA     ns1.countrydns.xyz. hostmaster.test.country. 2018061501 15620 1800 1814400 14400
 country.                    IN  NS      ns3.hiddenstate.xyz
 srv		            3600    IN	SRV     10 10 8080 srv.test.country.
+test.country        3600    IN  TXT     magic
 
 ```
 

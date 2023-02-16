@@ -42,8 +42,14 @@ describe('DNS Tests', function () {
     // eslint-disable-next-line no-unused-vars
     [TestSubdomainF, TestSubdomainFDnsHash],
     // eslint-disable-next-line no-unused-vars
-    [oneName, oneNameHash]
-  ] = makeTestDomains(['a', 'b', 'c', 'd', 'e', 'f', 'one'], TestDomainFqdn)
+    [docsName, docsNameHash],
+    // eslint-disable-next-line no-unused-vars
+    [oneName, oneNameHash],
+    // eslint-disable-next-line no-unused-vars
+    [srvName, srvNameHash],
+    // eslint-disable-next-line no-unused-vars
+    [wwwName, wwwNameHash]
+  ] = makeTestDomains(['a', 'b', 'c', 'd', 'e', 'f', 'docs', 'one', 'srv', 'www'], TestDomainFqdn)
 
   // Initial DNS Entries
   // a.test.country. 3600 IN A 1.2.3.4
@@ -69,21 +75,23 @@ describe('DNS Tests', function () {
     target: 'srv.test.country.'
   }
   const [InitialSoaRecord] = dns.encodeSOARecord({ name: TestDomainFqdn, rvalue: DefaultSoa })
-  const [InitialSrvRecord] = dns.encodeSRVRecord({ name: 'srv', rvalue: DefaultSrv })
-  const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: 'one.test.country.', cname: 'harmony.one' })
-  const [TestSubdomainOneInitialCnameRecord2] = dns.encodeCNAMERecord({ name: 'www', cname: 'test.country' })
-  const [TestSubdomainOneInitialDnameRecord] = dns.encodeDNAMERecord({ name: 'docs.test.country.', dname: 'docs.harmony.one' })
-  const [TestSubdomainOneInitialNSnameRecord] = dns.encodeNSRecord({ name: 'country.', nsname: 'ns3.hiddenstate.xyz' })
+  const [InitialSrvRecord] = dns.encodeSRVRecord({ name: srvName, rvalue: DefaultSrv })
+  const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: oneName, cname: 'harmony.one' })
+  const [TestSubdomainWWWInitialCnameRecord] = dns.encodeCNAMERecord({ name: wwwName, cname: 'test.country' })
+  const [TestSubdomainOneInitialDnameRecord] = dns.encodeDNAMERecord({ name: docsName, dname: 'docs.harmony.one' })
+  const [TestSubdomainOneInitialNSnameRecord] = dns.encodeNSRecord({ name: TestDomainFqdn, nsname: 'ns3.hiddenstate.xyz' })
+  const [initTxtRec] = dns.encodeTXTRecord({ name: TestDomainFqdn, text: 'magic' })
   const InitialFullDnsRecord = '0x' +
     TestSubdomainAInitialRecord +
     TestSubdomainBInitialRecord1 +
     TestSubdomainBInitialRecord2 +
     TestSubdomainOneInitialCnameRecord +
-    TestSubdomainOneInitialCnameRecord2 +
+    TestSubdomainWWWInitialCnameRecord +
     TestSubdomainOneInitialDnameRecord +
     TestSubdomainOneInitialNSnameRecord +
     InitialSoaRecord +
-    InitialSrvRecord
+    InitialSrvRecord +
+    initTxtRec
 
   before(async function () {
     this.beforeSnapshotId = await waffle.provider.send('evm_snapshot', [])
@@ -175,7 +183,12 @@ describe('DNS Tests', function () {
       expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainADnsHash, Constants.DNSRecordType.A)).to.equal('0x' + TestSubdomainAInitialRecord)
       expect(await this.publicResolver.dnsRecord(TestNode, TestSubdomainBDnsHash, Constants.DNSRecordType.A)).to.equal('0x' + TestSubdomainBInitialRecord1 + TestSubdomainBInitialRecord2)
       expect(await this.publicResolver.dnsRecord(TestNode, oneNameHash, Constants.DNSRecordType.CNAME)).to.equal('0x' + TestSubdomainOneInitialCnameRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, wwwNameHash, Constants.DNSRecordType.CNAME)).to.equal('0x' + TestSubdomainWWWInitialCnameRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, docsNameHash, Constants.DNSRecordType.DNAME)).to.equal('0x' + TestSubdomainOneInitialDnameRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.NS)).to.equal('0x' + TestSubdomainOneInitialNSnameRecord)
       expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.SOA)).to.equal('0x' + InitialSoaRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, srvNameHash, Constants.DNSRecordType.SRV)).to.equal('0x' + InitialSrvRecord)
+      expect(await this.publicResolver.dnsRecord(TestNode, TestDomainFqdnHash, Constants.DNSRecordType.TXT)).to.equal('0x' + initTxtRec)
     })
 
     it('DNS-002 should update existing records', async function (this: Context) {

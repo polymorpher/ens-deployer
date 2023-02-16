@@ -57,12 +57,12 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
-  const [initRecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
+  const [initARecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
   const aNameFQDN = 'a.' + FQDN
-  const [initRecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
+  const [initARecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
   // Set CNAME Record for one.domain
   const oneNameFQDN = 'one.' + FQDN
-  const [initRecCNAMEFQDN] = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
+  const [initCnameRecOneFQDN] = dns.encodeCNAMERecord({ name: oneNameFQDN, cname: 'harmony.one' })
   // Set Initial DNS entries
   let initRec
   // set all records for test domain and less for other domains
@@ -82,24 +82,24 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
       port: 8080,
       target: 'srv.test.country.'
     }
-    const [InitialSoaRecord] = dns.encodeSOARecord({ name: FQDN, rvalue: DefaultSoa })
-    const [InitialSrvRecord] = dns.encodeSRVRecord({ name: 'srv', rvalue: DefaultSrv })
-    const [TestSubdomainOneInitialCnameRecord] = dns.encodeCNAMERecord({ name: 'one.test.country.', cname: 'harmony.one' })
-    const [TestSubdomainOneInitialCnameRecord2] = dns.encodeCNAMERecord({ name: 'www', cname: 'test.country' })
-    const [TestSubdomainOneInitialDnameRecord] = dns.encodeDNAMERecord({ name: 'docs.test.country.', dname: 'docs.harmony.one' })
-    const [TestSubdomainOneInitialNSnameRecord] = dns.encodeNSRecord({ name: 'country.', nsname: 'ns3.hiddenstate.xyz' })
+    const [initSoaRec] = dns.encodeSOARecord({ name: FQDN, rvalue: DefaultSoa })
+    const [initSrvRec] = dns.encodeSRVRecord({ name: 'srv.' + FQDN, rvalue: DefaultSrv })
+    const [initCnameRecWWW] = dns.encodeCNAMERecord({ name: 'www.' + FQDN, cname: 'test.country' })
+    const [initDnameRec] = dns.encodeDNAMERecord({ name: 'docs.' + FQDN, dname: 'docs.harmony.one' })
+    const [initNsRec] = dns.encodeNSRecord({ name: FQDN, nsname: 'ns3.hiddenstate.xyz' })
+    const [initTxtRec] = dns.encodeTXTRecord({ name: FQDN, text: 'magic' })
     initRec = '0x' +
-        initRecFQDN +
-        initRecAFQDN +
-        initRecCNAMEFQDN +
-        TestSubdomainOneInitialCnameRecord +
-        TestSubdomainOneInitialCnameRecord2 +
-        TestSubdomainOneInitialDnameRecord +
-        TestSubdomainOneInitialNSnameRecord +
-        InitialSoaRecord +
-        InitialSrvRecord
+        initARecFQDN +
+        initARecAFQDN +
+        initCnameRecOneFQDN +
+        initCnameRecWWW +
+        initDnameRec +
+        initNsRec +
+        initSoaRec +
+        initSrvRec +
+        initTxtRec
   } else {
-    initRec = '0x' + initRecFQDN + initRecAFQDN + initRecCNAMEFQDN
+    initRec = '0x' + initARecFQDN + initARecAFQDN + initCnameRecOneFQDN
   }
   txr = await (await publicResolver.connect(owner).setDNSRecords(node, initRec)).wait()
   console.log(`setDNSRecords ${txr.transactionHash}`)
