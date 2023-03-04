@@ -110,7 +110,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   console.log(`Created records for: ${domain + '.' + TLD} and a.${FQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
 }
 
-const f = async function (hre: HardhatRuntimeEnvironment) {
+const func = async function (hre: HardhatRuntimeEnvironment) {
   // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local') {
     throw new Error('Should only deploy sample DNS registration in local network')
@@ -128,5 +128,6 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   await registerDomain('testlongdomain', bob, '128.0.0.1')
 }
 
-f.tags = ['ENSSampleDNS']
-export default f
+func.tags = ['ENSSampleDNS']
+func.dependencies = ['ENSDeployer']
+export default func

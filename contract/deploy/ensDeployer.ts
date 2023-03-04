@@ -7,7 +7,7 @@ const ORACLE_PRICE_PREMIUM = JSON.parse(process.env.ORACLE_PRICE_PREMIUM || '{}'
 
 console.log({ ORACLE_PRICE_NATIVE_ASSET_NANO_USD, ORACLE_PRICE_BASE_UNIT_PRICE, ORACLE_PRICE_PREMIUM })
 
-const f = async function (hre: HardhatRuntimeEnvironment) {
+const func = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
   const TLD = process.env.TLD || 'country'
@@ -90,5 +90,5 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
   console.log(JSON.stringify(addresses))
   return addresses
 }
-f.tags = ['ENSDeployer']
-export default f
+func.tags = ['ENSDeployer']
+export default func
