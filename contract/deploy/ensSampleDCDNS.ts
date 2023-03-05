@@ -49,6 +49,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   console.log('Commitment Stored', txr.transactionHash)
   txr = await (await dc.connect(owner).register(
     domain,
+    owner.address,
     url,
     secret,
     {

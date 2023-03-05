@@ -232,10 +232,11 @@ contract DC is Pausable, Ownable {
      * @dev `register` calls RegistrarController register and is used to register a name
      * this also takes a fee for the web2 registration which is held by DC.sol a check is made to ensure the value sent is sufficient for both fees
      * @param name The name to be registered e.g. for test.country it would be test
+     # @param owner The owner of the registerd name
      * @param url A URL that can be embedded in a web2 default domain page e.g. a twitter post
      * @param secret A random secret passed by the client
      */
-    function register(string calldata name, string calldata url, bytes32 secret) public payable whenNotPaused {
+    function register(string calldata name, address owner, string calldata url, bytes32 secret) public payable whenNotPaused {
         require(bytes(name).length <= 128, "DC: name too long");
         require(bytes(url).length <= 1024, "DC: url too long");
         uint256 price = getPrice(name);
@@ -247,7 +248,7 @@ contract DC is Pausable, Ownable {
 
         require(price <= msg.value, "DC: insufficient payment");
         require(available(name), "DC: name unavailable");
-        _register(name, msg.sender, secret);
+        _register(name, owner, secret);
         // Update Name Record and send events
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
@@ -402,7 +403,7 @@ contract DC is Pausable, Ownable {
         emit URLCleared(name, msg.sender);
     }
 
-    function getAllUrls(string calldata name) public returns (string[] memory){
+    function getAllUrls(string calldata name) public view returns (string[] memory){
         bytes32 key = keccak256(bytes(name));
         string[] memory ret = new string[](urlsPerRecord[key].length);
         for (uint256 i = 0; i < urlsPerRecord[key].length; i++) {
