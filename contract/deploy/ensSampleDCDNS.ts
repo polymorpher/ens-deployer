@@ -2,14 +2,14 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
 import { dns } from '../lib'
 import namehash from 'eth-ens-namehash'
-import { LengthBasedPriceOracle, PublicResolver, DC, BaseRegistrarImplementation, ENSRegistry, TLDNameWrapper } from '../typechain-types'
+import { LengthBasedPriceOracle, PublicResolver, Tweet, BaseRegistrarImplementation, ENSRegistry, TLDNameWrapper } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
-// Get the DC contract
+// Get the Tweet contract
 const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
 // const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
-const DC_ADDRESS = process.env.DC_CONTRACT as string
+const TWEET_ADDRESS = process.env.TWEET_CONTRACT as string
 // const REGISTRAR = process.env.REGISTRAR as string
 // const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
 // const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
@@ -25,7 +25,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   // const fuses = ethers.BigNumber.from(0)
   // const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
   // const registrarController: RegistrarController = await ethers.getContractAt('RegistrarController', REGISTRAR_CONTROLLER)
-  const dc: DC = await ethers.getContractAt('DC', DC_ADDRESS)
+  const tweet: Tweet = await ethers.getContractAt('Tweet', TWEET_ADDRESS)
   // const registrar: BaseRegistrarImplementation = await ethers.getContractAt('BaseRegistrarImplementation', REGISTRAR)
   // const registry: ENSRegistry = await ethers.getContractAt('ENSRegistry', REGISTRY)
   // const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
@@ -38,16 +38,16 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   console.log(`baseRentalprice: ${JSON.stringify(baseRentalPrice.toString())}`)
   console.log(`price.base     : ${ethers.utils.formatEther(price.base)}`)
   console.log(`price.premium  : ${ethers.utils.formatEther(price.premium)}`)
-  console.log(`dc.base_rental : ${ethers.utils.formatEther(baseRentalPrice)}`)
+  console.log(`tweet.base_rental : ${ethers.utils.formatEther(baseRentalPrice)}`)
   console.log(`price.total    : ${ethers.utils.formatEther(priceTotal)}`)
-  const commitment = await dc.connect(owner).makeCommitment(
+  const commitment = await tweet.connect(owner).makeCommitment(
     domain,
     owner.address,
     secret
   )
-  let txr = await (await dc.connect(owner).commit(commitment)).wait()
+  let txr = await (await tweet.connect(owner).commit(commitment)).wait()
   console.log('Commitment Stored', txr.transactionHash)
-  txr = await (await dc.connect(owner).register(
+  txr = await (await tweet.connect(owner).register(
     domain,
     owner.address,
     url,
@@ -131,9 +131,9 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
 const func = async function (hre: HardhatRuntimeEnvironment) {
   // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local' && hre.network.name !== 'hardhat') {
-    throw new Error('Should only deploy sample DCDNS registration in hardhat or local network')
+    throw new Error('Should only deploy sample Tweet registration in hardhat or local network')
   }
-  console.log(`about to registerDomain using DC in network: ${hre.network.name}`)
+  console.log(`about to registerDomain using Tweet in network: ${hre.network.name}`)
   // The 10 signer accounts represent: deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
   const signers = await ethers.getSigners()
   const alice = signers[4]
@@ -141,11 +141,11 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
 
   // Register Domains
   await registerDomain('polymorpher', alice, 'tweet.polymorpher.country', '148.0.0.1')
-  await registerDomain('dctesta', alice, 'tweet.dctesta.country', '138.0.0.2')
-  await registerDomain('dctestb', bob, 'tweet.dctestb.country', '138.0.0.3')
-  await registerDomain('dctestlongdomain', bob, 'tweet.dctestlongdomain.country', '138.0.0.1')
+  await registerDomain('tweettesta', alice, 'tweet.tweettesta.country', '138.0.0.2')
+  await registerDomain('tweettestb', bob, 'tweet.tweettestb.country', '138.0.0.3')
+  await registerDomain('tweettestlongdomain', bob, 'tweet.tweettestlongdomain.country', '138.0.0.1')
 }
 
-func.tags = ['ENSSampleDCDNS']
+func.tags = ['ENSSampleTweetDNS']
 func.dependencies = ['ENSDeployer', 'DC']
 export default func

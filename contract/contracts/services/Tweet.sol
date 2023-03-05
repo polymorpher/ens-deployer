@@ -4,37 +4,25 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-
-import "./IRegistrarController.sol";
-import "./INameWrapper.sol";
-import "./IBaseRegistrar.sol";
-
-import "hardhat/console.sol";
-
+import "./IDC.sol";
 /**
-    @title A domain manager contract for .country (DC -  Dot Country)
+    @title Tweet domains service contract for .country (DC -  Dot Country)
     @author John Whitton (github.com/johnwhitton), reviewed and revised by Aaron Li (github.com/polymorpher)
-    @notice This contract allows the rental of domains under .country (”DC”)
-    it integrates with the ENSRegistrarController and the ENS system as a whole for persisting of domain registrations.
-    It is responsible for holding the revenue from these registrations for the web2 portion of the registration process,
-    with the web3 registration revenue being held by the RegistrarController contract.
-    An example would be as follows Alice registers alice.com and calls the register function with an amount of 10,000 ONE.
-    5000 ONE would be held by the DC contract and the remaining 5000 funds would be sent to the RegistrarController using 
-    the register function.
+    @notice This service contract allows the rental of domains under .country (”DC”)
+    it integrates with the DC (DotCountry Domain Controller) and the ENS system as a whole for persisting of domain registrations.
+    It is responsible for holding the revenue from these registrations for the web2 portion of the 
+    registration process, with the web3 registration revenue being held by the RegistrarController contract.
+    An example would be as follows Alice registers alice.com this calls the Tweet service register function with an amount of 10,000 ONE.
+    5000 ONE would be held by the Tweet.sol and the remaining 5000 funds would be sent to the RegistrarController 
+    via this contract using the register function.
 
  */
 contract Tweet is Pausable, Ownable {
     uint256 public gracePeriod;
     uint256 public baseRentalPrice;
     address public revenueAccount;
-    IRegistrarController public registrarController;
-    INameWrapper public nameWrapper;
-    IBaseRegistrar public baseRegistrar;
     uint256 public duration;
-    address public resolver;
-    bool public reverseRecord;
-    uint32 public fuses;
-    uint64 public wrapperExpiry;
+    IDC     public dc;
     bool public initialized;
 
     struct InitConfiguration {
@@ -42,17 +30,11 @@ contract Tweet is Pausable, Ownable {
         uint256 duration;
         uint256 gracePeriod;
 
-        // 32-bytes block
+        // 20-bytes block
         address revenueAccount;
-        uint64 wrapperExpiry;
-        uint32 fuses;
 
-        // 81-bytes
-        address registrarController;
-        address nameWrapper;
-        address baseRegistrar;
-        address resolver;
-        bool reverseRecord;
+        // 20-bytes
+        address dc;
     }
 
     struct NameRecord {
@@ -86,14 +68,7 @@ contract Tweet is Pausable, Ownable {
         setGracePeriod(_initConfig.gracePeriod);
 
         setRevenueAccount(_initConfig.revenueAccount);
-        setWrapperExpiry(_initConfig.wrapperExpiry);
-        setFuses(_initConfig.fuses);
-
-        setRegistrarController(_initConfig.registrarController);
-        setNameWrapper(_initConfig.nameWrapper);
-        setBaseRegistrar(_initConfig.baseRegistrar);
-        setResolver(_initConfig.resolver);
-        setReverseRecord(_initConfig.reverseRecord);
+        setDC(_initConfig.dc);
     }
 
     function initialize(string[] calldata _names, NameRecord[] calldata _records) external onlyOwner {
@@ -127,16 +102,8 @@ contract Tweet is Pausable, Ownable {
         revenueAccount = _revenueAccount;
     }
 
-    function setRegistrarController(address _registrarController) public onlyOwner {
-        registrarController = IRegistrarController(_registrarController);
-    }
-
-    function setNameWrapper(address _nameWrapper) public onlyOwner {
-        nameWrapper = INameWrapper(_nameWrapper);
-    }
-
-    function setBaseRegistrar(address _baseRegistrar) public onlyOwner {
-        baseRegistrar = IBaseRegistrar(_baseRegistrar);
+    function setDC(address _dc) public onlyOwner {
+        dc = IDC(_dc);
     }
 
     function setDuration(uint256 _duration) public onlyOwner {
@@ -145,22 +112,6 @@ contract Tweet is Pausable, Ownable {
 
     function setGracePeriod(uint256 _gracePeriod) public onlyOwner {
         gracePeriod = _gracePeriod;
-    }
-
-    function setResolver(address _resolver) public onlyOwner {
-        resolver = _resolver;
-    }
-
-    function setReverseRecord(bool _reverseRecord) public onlyOwner {
-        reverseRecord = _reverseRecord;
-    }
-
-    function setFuses(uint32 _fuses) public onlyOwner {
-        fuses = _fuses;
-    }
-
-    function setWrapperExpiry(uint64 _wrapperExpiry) public onlyOwner {
-        wrapperExpiry = _wrapperExpiry;
     }
 
     function pause() external onlyOwner {
@@ -191,7 +142,8 @@ contract Tweet is Pausable, Ownable {
      */
     function available(string memory name) public view returns (bool) {
         NameRecord storage record = nameRecords[keccak256(bytes(name))];
-        return registrarController.available(name) && (record.renter == address(0) || uint256(record.expirationTime) + gracePeriod <= block.timestamp);
+        bool ensAvailable = dc.available(name);
+        return ensAvailable && (record.renter == address(0) || uint256(record.expirationTime) + gracePeriod <= block.timestamp);
     }
 
     /**
@@ -202,8 +154,7 @@ contract Tweet is Pausable, Ownable {
      * @param secret A random secret passed by the client
      */
     function makeCommitment(string memory name, address owner, bytes32 secret) public view returns (bytes32) {
-        bytes[] memory data;
-        return registrarController.makeCommitment(name, owner, duration, secret, resolver, data, reverseRecord, fuses, wrapperExpiry);
+        return dc.makeCommitment(name, owner, duration, secret);
     }
 
     /**
@@ -211,21 +162,11 @@ contract Tweet is Pausable, Ownable {
      * @param commitment The commitment calculated by makeCommitment
      */
     function commit(bytes32 commitment) public {
-        registrarController.commit(commitment);
-    }
-
-    /**
-     * @dev `getENSPrice` gets the price needed to be paid to ENS which calculated as
-     * tRegistrarController.rentPrice (price.base + price.premium)
-     * @param name The name being registered
-     */
-    function getENSPrice(string memory name) public view returns (uint256) {
-        IRegistrarController.Price memory price = registrarController.rentPrice(name, duration);
-        return price.base + price.premium;
+        dc.commit(commitment);
     }
 
     function getPrice(string memory name) public view returns (uint256) {
-        uint256 ensPrice = getENSPrice(name);
+        uint256 ensPrice = dc.getENSPrice(name, duration);
         return ensPrice + baseRentalPrice;
     }
 
@@ -247,17 +188,12 @@ contract Tweet is Pausable, Ownable {
     function register(string calldata name, address owner, string calldata url, bytes32 secret) public payable whenNotPaused {
         require(bytes(name).length <= 128, "DC: name too long");
         require(bytes(url).length <= 1024, "DC: url too long");
+        uint256 ensPrice = dc.getENSPrice(name, duration);
         uint256 price = getPrice(name);
-        console.log("==== DC register     ====");
-        console.log("baseRentalPrice: ", baseRentalPrice );
-        console.log("price          : ", price );
-        console.log("msg.value      : ", msg.value );
-        console.log("==== DC end register ====");
 
         require(price <= msg.value, "DC: insufficient payment");
         require(available(name), "DC: name unavailable");
-        _register(name, owner, secret);
-        // Update Name Record and send events
+        dc.register{value: ensPrice}(name, owner, duration, secret);
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
         nameRecord.renter = owner;
@@ -279,19 +215,6 @@ contract Tweet is Pausable, Ownable {
     }
 
     /**
-     * @dev `_register` calls RegistrarController register and is used to register a name
-     * it is passed a value to cover the costs of the ens registration
-     * @param name The name to be registered e.g. for test.country it would be test
-     * @param owner The owner address of the name to be registered
-     * @param secret A random secret passed by the client
-     */
-    function _register(string calldata name, address owner, bytes32 secret) internal whenNotPaused {
-        uint256 ensPrice = getENSPrice(name);
-        bytes[] memory emptyData;
-        registrarController.register{value: ensPrice}(name, owner, duration, secret, resolver, emptyData, reverseRecord, fuses, wrapperExpiry);
-    }
-
-    /**
      * @dev `renew` calls RegistrarController renew and is used to renew a name
      * this also takes a fee for the web2 renewal which is held by DC.sol a check is made to ensure the value sent is sufficient for both fees
      * duration is set at the contract level
@@ -304,11 +227,11 @@ contract Tweet is Pausable, Ownable {
         NameRecord storage nameRecord = nameRecords[keccak256(bytes(name))];
         require(nameRecord.renter != address(0), "DC: name is not rented");
         require(nameRecord.expirationTime + gracePeriod >= block.timestamp, "DC: cannot renew after grace period" );
-        uint256 ensPrice = getENSPrice(name);
+        uint256 ensPrice = dc.getENSPrice(name, duration);
         uint256 price = baseRentalPrice + ensPrice;
         require(price <= msg.value, "DC: insufficient payment");
 
-        registrarController.renew{value: ensPrice}(name, duration);
+        dc.renew{value: ensPrice}(name, duration);
 
         nameRecord.lastPrice = price;
         nameRecord.expirationTime += duration;
@@ -329,7 +252,7 @@ contract Tweet is Pausable, Ownable {
     function getReinstateCost(string calldata name) public view returns (uint256){
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
-        uint256 expiration = baseRegistrar.nameExpires(tokenId);
+        uint256 expiration = dc.nameExpires(name);
         uint256 chargeableDuration = 0;
         if (nameRecord.expirationTime == 0) {
             chargeableDuration = expiration - block.timestamp;
@@ -344,10 +267,10 @@ contract Tweet is Pausable, Ownable {
     function reinstate(string calldata name) public payable whenNotPaused {
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
-        require(!registrarController.available(name), "DC: cannot reinstate an available name in ENS");
-        uint256 expiration = baseRegistrar.nameExpires(tokenId);
+        require(!dc.available(name), "DC: cannot reinstate an available name in ENS");
+        uint256 expiration = dc.nameExpires(name);
         require(expiration > block.timestamp, "DC: name expired");
-        address domainOwner = baseRegistrar.ownerOf(tokenId);
+        address domainOwner = dc.ownerOf(name);
         uint256 charge = getReinstateCost(name);
 
         require(msg.value >= charge, "DC: insufficient payment");
@@ -369,10 +292,8 @@ contract Tweet is Pausable, Ownable {
     }
 
     modifier recordOwnerOnly(string calldata name){
-        bytes32 node = keccak256(bytes(name));
-        uint256 tokenId = uint256(node);
         NameRecord storage r = nameRecords[keccak256(bytes(name))];
-        require(nameWrapper.ownerOf(tokenId) == msg.sender, "DC: not nameWrapperowner");
+        require(dc.ownerOf(name) == msg.sender, "DC: not nameWrapperowner");
         require(r.renter == msg.sender, "DC: not owner");
         require(r.expirationTime > block.timestamp, "DC: expired");
         _;

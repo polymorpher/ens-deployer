@@ -22,5 +22,5 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
   console.log('- maxNumAlias:', (await eas.maxNumAlias()).toString())
 }
 func.tags = ['EAS']
-func.dependencies = ['ENSDeployer', 'DC']
+func.dependencies = ['ENSDeployer', 'DC', 'Tweet']
 export default func
