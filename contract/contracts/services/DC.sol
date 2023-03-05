@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "./IRegistrarController.sol";
+import "./INameWrapper.sol";
 import "./IBaseRegistrar.sol";
 
 import "hardhat/console.sol";
@@ -27,6 +28,7 @@ contract DC is Pausable, Ownable {
     uint256 public baseRentalPrice;
     address public revenueAccount;
     IRegistrarController public registrarController;
+    INameWrapper public nameWrapper;
     IBaseRegistrar public baseRegistrar;
     uint256 public duration;
     address public resolver;
@@ -45,19 +47,20 @@ contract DC is Pausable, Ownable {
         uint64 wrapperExpiry;
         uint32 fuses;
 
-        // 61-bytes
+        // 81-bytes
         address registrarController;
+        address nameWrapper;
         address baseRegistrar;
         address resolver;
         bool reverseRecord;
     }
 
     struct NameRecord {
+        string url; // this one should be pinned on top
         address renter;
         uint256 rentTime;
         uint256 expirationTime;
         uint256 lastPrice;
-        string url; // this one should be pinned on top
         string prev;
         string next;
     }
@@ -87,6 +90,7 @@ contract DC is Pausable, Ownable {
         setFuses(_initConfig.fuses);
 
         setRegistrarController(_initConfig.registrarController);
+        setNameWrapper(_initConfig.nameWrapper);
         setBaseRegistrar(_initConfig.baseRegistrar);
         setResolver(_initConfig.resolver);
         setReverseRecord(_initConfig.reverseRecord);
@@ -125,6 +129,10 @@ contract DC is Pausable, Ownable {
 
     function setRegistrarController(address _registrarController) public onlyOwner {
         registrarController = IRegistrarController(_registrarController);
+    }
+
+    function setNameWrapper(address _nameWrapper) public onlyOwner {
+        nameWrapper = INameWrapper(_nameWrapper);
     }
 
     function setBaseRegistrar(address _baseRegistrar) public onlyOwner {
@@ -252,7 +260,7 @@ contract DC is Pausable, Ownable {
         // Update Name Record and send events
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
-        nameRecord.renter = msg.sender;
+        nameRecord.renter = owner;
         nameRecord.lastPrice = price;
         nameRecord.rentTime = block.timestamp;
         nameRecord.expirationTime = block.timestamp + duration;
@@ -260,7 +268,7 @@ contract DC is Pausable, Ownable {
             nameRecord.url = url;
         }
         _updateLinkedListWithNewName(nameRecord, name);
-        emit NameRented(name, msg.sender, price, url);
+        emit NameRented(name, owner, price, url);
 
         // Return any excess funds
         uint256 excess = msg.value - price;
@@ -361,7 +369,10 @@ contract DC is Pausable, Ownable {
     }
 
     modifier recordOwnerOnly(string calldata name){
+        bytes32 node = keccak256(bytes(name));
+        uint256 tokenId = uint256(node);
         NameRecord storage r = nameRecords[keccak256(bytes(name))];
+        require(nameWrapper.ownerOf(tokenId) == msg.sender, "DC: not nameWrapperowner");
         require(r.renter == msg.sender, "DC: not owner");
         require(r.expirationTime > block.timestamp, "DC: expired");
         _;

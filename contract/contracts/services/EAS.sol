@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // TODO - add an owner-verification function in DC contract
 interface IDC {
     struct NameRecord {
+        string url; // this one should be pinned on top
         address renter;
         uint256 rentTime;
         uint256 expirationTime;
         uint256 lastPrice;
-        string url; // this one should be pinned on top
         string prev;
         string next;
     }

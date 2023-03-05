@@ -6,12 +6,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "./IRegistrarController.sol";
+import "./INameWrapper.sol";
 import "./IBaseRegistrar.sol";
 
 import "hardhat/console.sol";
 
 /**
-    @title A domain manager contract for .country (Tweet -  Tweet Domain Manager)
+    @title A domain manager contract for .country (DC -  Dot Country)
     @author John Whitton (github.com/johnwhitton), reviewed and revised by Aaron Li (github.com/polymorpher)
     @notice This contract allows the rental of domains under .country (”DC”)
     it integrates with the ENSRegistrarController and the ENS system as a whole for persisting of domain registrations.
@@ -27,6 +28,7 @@ contract Tweet is Pausable, Ownable {
     uint256 public baseRentalPrice;
     address public revenueAccount;
     IRegistrarController public registrarController;
+    INameWrapper public nameWrapper;
     IBaseRegistrar public baseRegistrar;
     uint256 public duration;
     address public resolver;
@@ -45,19 +47,20 @@ contract Tweet is Pausable, Ownable {
         uint64 wrapperExpiry;
         uint32 fuses;
 
-        // 61-bytes
+        // 81-bytes
         address registrarController;
+        address nameWrapper;
         address baseRegistrar;
         address resolver;
         bool reverseRecord;
     }
 
     struct NameRecord {
+        string url; // this one should be pinned on top
         address renter;
         uint256 rentTime;
         uint256 expirationTime;
         uint256 lastPrice;
-        string url; // this one should be pinned on top
         string prev;
         string next;
     }
@@ -87,6 +90,7 @@ contract Tweet is Pausable, Ownable {
         setFuses(_initConfig.fuses);
 
         setRegistrarController(_initConfig.registrarController);
+        setNameWrapper(_initConfig.nameWrapper);
         setBaseRegistrar(_initConfig.baseRegistrar);
         setResolver(_initConfig.resolver);
         setReverseRecord(_initConfig.reverseRecord);
@@ -125,6 +129,10 @@ contract Tweet is Pausable, Ownable {
 
     function setRegistrarController(address _registrarController) public onlyOwner {
         registrarController = IRegistrarController(_registrarController);
+    }
+
+    function setNameWrapper(address _nameWrapper) public onlyOwner {
+        nameWrapper = INameWrapper(_nameWrapper);
     }
 
     function setBaseRegistrar(address _baseRegistrar) public onlyOwner {
@@ -232,10 +240,11 @@ contract Tweet is Pausable, Ownable {
      * @dev `register` calls RegistrarController register and is used to register a name
      * this also takes a fee for the web2 registration which is held by DC.sol a check is made to ensure the value sent is sufficient for both fees
      * @param name The name to be registered e.g. for test.country it would be test
+     # @param owner The owner of the registerd name
      * @param url A URL that can be embedded in a web2 default domain page e.g. a twitter post
      * @param secret A random secret passed by the client
      */
-    function register(string calldata name, string calldata url, bytes32 secret) public payable whenNotPaused {
+    function register(string calldata name, address owner, string calldata url, bytes32 secret) public payable whenNotPaused {
         require(bytes(name).length <= 128, "DC: name too long");
         require(bytes(url).length <= 1024, "DC: url too long");
         uint256 price = getPrice(name);
@@ -247,11 +256,11 @@ contract Tweet is Pausable, Ownable {
 
         require(price <= msg.value, "DC: insufficient payment");
         require(available(name), "DC: name unavailable");
-        _register(name, msg.sender, secret);
+        _register(name, owner, secret);
         // Update Name Record and send events
         uint256 tokenId = uint256(keccak256(bytes(name)));
         NameRecord storage nameRecord = nameRecords[bytes32(tokenId)];
-        nameRecord.renter = msg.sender;
+        nameRecord.renter = owner;
         nameRecord.lastPrice = price;
         nameRecord.rentTime = block.timestamp;
         nameRecord.expirationTime = block.timestamp + duration;
@@ -259,7 +268,7 @@ contract Tweet is Pausable, Ownable {
             nameRecord.url = url;
         }
         _updateLinkedListWithNewName(nameRecord, name);
-        emit NameRented(name, msg.sender, price, url);
+        emit NameRented(name, owner, price, url);
 
         // Return any excess funds
         uint256 excess = msg.value - price;
@@ -360,7 +369,10 @@ contract Tweet is Pausable, Ownable {
     }
 
     modifier recordOwnerOnly(string calldata name){
+        bytes32 node = keccak256(bytes(name));
+        uint256 tokenId = uint256(node);
         NameRecord storage r = nameRecords[keccak256(bytes(name))];
+        require(nameWrapper.ownerOf(tokenId) == msg.sender, "DC: not nameWrapperowner");
         require(r.renter == msg.sender, "DC: not owner");
         require(r.expirationTime > block.timestamp, "DC: expired");
         _;
@@ -402,7 +414,7 @@ contract Tweet is Pausable, Ownable {
         emit URLCleared(name, msg.sender);
     }
 
-    function getAllUrls(string calldata name) public returns (string[] memory){
+    function getAllUrls(string calldata name) public view returns (string[] memory){
         bytes32 key = keccak256(bytes(name));
         string[] memory ret = new string[](urlsPerRecord[key].length);
         for (uint256 i = 0; i < urlsPerRecord[key].length; i++) {

@@ -22,6 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     fuses: config.fuses,
 
     registrarController: config.registrarController,
+    nameWrapper: config.nameWrapper,
     baseRegistrar: config.registrar,
     resolver: config.resolver,
     reverseRecord: config.reverseRecord
