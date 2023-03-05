@@ -8,8 +8,8 @@
     "scripts": {
         "compile": "npx hardhat compile",
         "deploy": "npx hardhat deploy --tags ENSDeployer",
-        "deploy-dns": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS",
-        "deploy-dc": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS,DC",
+        "deploy-dc": "npx hardhat deploy --network local --tags ENSDeployer,DC",
+        "deploy-sample": "npx hardhat deploy --network local --tags ENSDeployer,DC,ENSSampleDNS,ENSSampleDCDNS",
         "test": "npx hardhat test --network local",
         "test-deploy": "npx hardhat test --network local --grep 'Deployment'",
         "test-dns": "npx hardhat test --network local --grep 'DNS'",

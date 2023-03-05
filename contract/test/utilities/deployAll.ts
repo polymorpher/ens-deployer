@@ -14,7 +14,7 @@ import {
   StaticMetadataService,
   TLDNameWrapper,
   UniversalResolver
-} from '../../typechain'
+} from '../../typechain-types'
 import { Context } from 'mocha'
 
 export async function deploy (context: Context) {

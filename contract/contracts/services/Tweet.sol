@@ -8,8 +8,10 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "./IRegistrarController.sol";
 import "./IBaseRegistrar.sol";
 
+import "hardhat/console.sol";
+
 /**
-    @title A domain manager contract for .country (DC -  Dot Country)
+    @title A domain manager contract for .country (Tweet -  Tweet Domain Manager)
     @author John Whitton (github.com/johnwhitton), reviewed and revised by Aaron Li (github.com/polymorpher)
     @notice This contract allows the rental of domains under .country (”DC”)
     it integrates with the ENSRegistrarController and the ENS system as a whole for persisting of domain registrations.
@@ -20,7 +22,7 @@ import "./IBaseRegistrar.sol";
     the register function.
 
  */
-contract DC is Pausable, Ownable {
+contract Tweet is Pausable, Ownable {
     uint256 public gracePeriod;
     uint256 public baseRentalPrice;
     address public revenueAccount;
@@ -237,6 +239,12 @@ contract DC is Pausable, Ownable {
         require(bytes(name).length <= 128, "DC: name too long");
         require(bytes(url).length <= 1024, "DC: url too long");
         uint256 price = getPrice(name);
+        console.log("==== DC register     ====");
+        console.log("baseRentalPrice: ", baseRentalPrice );
+        console.log("price          : ", price );
+        console.log("msg.value      : ", msg.value );
+        console.log("==== DC end register ====");
+
         require(price <= msg.value, "DC: insufficient payment");
         require(available(name), "DC: name unavailable");
         _register(name, msg.sender, secret);

@@ -12,6 +12,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BytesUtils} from "@ensdomains/ens-contracts/contracts/wrapper/BytesUtils.sol";
 import {ERC20Recoverable} from "@ensdomains/ens-contracts/contracts/utils/ERC20Recoverable.sol";
+import "hardhat/console.sol";
 
 error Unauthorised(bytes32 node, address addr);
 error NameNotFound();
@@ -196,6 +197,10 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
         uint64 expiry
     ) external override onlyController returns (uint256 registrarExpiry) {
         uint256 tokenId = uint256(keccak256(bytes(label)));
+        console.log("==== TLDNameWrapper registerAndWrapETH2LD     ====");
+        console.log("label  : ", label);
+        console.log("tokenId: ", tokenId);
+        console.log("==== TLDNameWrapper registerAndWrapETH2LD end ====");
         registrarExpiry = registrar.register(tokenId, address(this), duration);
         _wrapETH2LD(label, wrappedOwner, fuses, expiry, resolver);
     }

@@ -2,60 +2,91 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
 import { dns } from '../lib'
 import namehash from 'eth-ens-namehash'
-import { LengthBasedPriceOracle, PublicResolver, RegistrarController } from '../typechain-types'
+import { LengthBasedPriceOracle, PublicResolver, DC, BaseRegistrarImplementation, ENSRegistry, TLDNameWrapper } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
+// Get the DC contract
 const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
-const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
+// const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
+const DC_ADDRESS = process.env.DC as string
+const REGISTRAR = process.env.REGISTRAR as string
+const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
+const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
+const BASE_RENTAL_PRICE_ETH = process.env.BASE_RENTAL_PRICE_ETH as string
+const DURATION_DAYS = process.env.DURATION_DAYS as string
 
-async function registerDomain (domain: string, owner: SignerWithAddress, ip: string) {
-  const duration = ethers.BigNumber.from(28 * 24 * 3600)
+// Will leave the DNS update functions as well
+async function registerDomain (domain: string, owner: SignerWithAddress, url: string, ip: string) {
+  const duration = ethers.BigNumber.from(Number(DURATION_DAYS) * 24 * 3600)
   const secret = new Uint8Array(32).fill(0)
-  const callData = []
-  const reverseRecord = false
-  const fuses = ethers.BigNumber.from(0)
-  const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
-  const registrarController: RegistrarController = await ethers.getContractAt('RegistrarController', REGISTRAR_CONTROLLER)
+  // const callData = []
+  // const reverseRecord = false
+  // const fuses = ethers.BigNumber.from(0)
+  // const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
+  // const registrarController: RegistrarController = await ethers.getContractAt('RegistrarController', REGISTRAR_CONTROLLER)
+  const dc: DC = await ethers.getContractAt('DC', DC_ADDRESS)
+  const registrar: BaseRegistrarImplementation = await ethers.getContractAt('BaseRegistrarImplementation', REGISTRAR)
+  const registry: ENSRegistry = await ethers.getContractAt('ENSRegistry', REGISTRY)
+  const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
   const priceOracle: LengthBasedPriceOracle = await ethers.getContractAt('LengthBasedPriceOracle', PRICE_ORACLE)
   const price = await priceOracle.price(domain, 0, duration)
+  const baseRentalPrice = ethers.utils.parseEther(BASE_RENTAL_PRICE_ETH).toString()
+  const priceTotal = price.base.add(price.premium).add(baseRentalPrice)
   console.log(`registering domain: ${domain}`)
   console.log(`price          : ${JSON.stringify(price.toString())}`)
+  console.log(`baseRentalprice: ${JSON.stringify(baseRentalPrice.toString())}`)
   console.log(`price.base     : ${ethers.utils.formatEther(price.base)}`)
   console.log(`price.premium  : ${ethers.utils.formatEther(price.premium)}`)
-  const commitment = await registrarController.connect(owner).makeCommitment(
+  console.log(`dc.base_rental : ${ethers.utils.formatEther(baseRentalPrice)}`)
+  console.log(`price.total    : ${ethers.utils.formatEther(priceTotal)}`)
+  const commitment = await dc.connect(owner).makeCommitment(
     domain,
     owner.address,
-    duration,
-    secret,
-    PUBLIC_RESOLVER,
-    callData,
-    reverseRecord,
-    fuses,
-    wrapperExpiry
+    // duration,
+    secret
+    // PUBLIC_RESOLVER,
+    // callData,
+    // reverseRecord,
+    // fuses,
+    // wrapperExpiry
   )
-  let txr = await (await registrarController.connect(owner).commit(commitment)).wait()
+  let txr = await (await dc.connect(owner).commit(commitment)).wait()
   console.log('Commitment Stored', txr.transactionHash)
-  txr = await (await registrarController.connect(owner).register(
+  txr = await (await dc.connect(owner).register(
     domain,
-    owner.address,
-    duration,
+    url,
+    // owner.address,
+    // duration,
     secret,
-    PUBLIC_RESOLVER,
-    callData,
-    reverseRecord,
-    fuses,
-    wrapperExpiry,
+    // PUBLIC_RESOLVER,
+    // callData,
+    // reverseRecord,
+    // fuses,
+    // wrapperExpiry,
     {
-      value: price.base.add(price.premium)
+      value: priceTotal
     }
   )).wait()
   console.log(`Registered: ${domain}`, txr.transactionHash)
+  // check the owner
+  if (domain === 'polymorpher') {
+    console.log('++++++ OWNER    ++++++')
+    console.log(`owner.address: ${owner.address}`)
+    console.log('tokenId: 85444479313978382769447597158503987460785479043645716011057585575532643322973')
+    console.log(`${domain} owner via registrar: ${await registrar.ownerOf('85444479313978382769447597158503987460785479043645716011057585575532643322973')}`)
+    console.log(`${domain} owner via TLDNameWrapper: ${await tldNameWrapper.ownerOf('85444479313978382769447597158503987460785479043645716011057585575532643322973')}`)
+    console.log('++++++ OWNER end ++++++')
+  }
 
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', PUBLIC_RESOLVER)
   const TLD = process.env.TLD || 'country'
   const node = namehash.hash(domain + '.' + TLD)
   const FQDN = domain + '.' + TLD + '.'
+  console.log(`domain: ${domain}`)
+  console.log(`FQDN: ${FQDN}`)
+  console.log(`node: ${node}`)
+  console.log(`${domain} owner via registry: ${await registry.owner(node)}`)
   const [initARecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
   const aNameFQDN = 'a.' + FQDN
   const [initARecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
@@ -113,21 +144,21 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
 const func = async function (hre: HardhatRuntimeEnvironment) {
   // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local' && hre.network.name !== 'hardhat') {
-    throw new Error('Should only deploy sample DNS registration in hardhat or local network')
+    throw new Error('Should only deploy sample DCDNS registration in hardhat or local network')
   }
-  console.log(`about to registerDomain in network: ${hre.network.name}`)
+  console.log(`about to registerDomain using DC in network: ${hre.network.name}`)
   // The 10 signer accounts represent: deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
   const signers = await ethers.getSigners()
   const alice = signers[4]
   const bob = signers[5]
 
   // Register Domains
-  await registerDomain('test', alice, '128.0.0.1')
-  await registerDomain('testa', alice, '128.0.0.2')
-  await registerDomain('testb', bob, '128.0.0.3')
-  await registerDomain('testlongdomain', bob, '128.0.0.1')
+  await registerDomain('polymorpher', alice, 'tweet.polymorpher.country', '148.0.0.1')
+  await registerDomain('dctesta', alice, 'tweet.dctesta.country', '138.0.0.2')
+  await registerDomain('dctestb', bob, 'tweet.dctestb.country', '138.0.0.3')
+  await registerDomain('dctestlongdomain', bob, 'tweet.dctestlongdomain.country', '138.0.0.1')
 }
 
-func.tags = ['ENSSampleDNS']
-func.dependencies = ['ENSDeployer']
+func.tags = ['ENSSampleDCDNS']
+func.dependencies = ['ENSDeployer', 'DC']
 export default func
