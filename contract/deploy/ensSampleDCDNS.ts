@@ -9,7 +9,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
 // const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
-const DC_ADDRESS = process.env.DC as string
+const DC_ADDRESS = process.env.DC_CONTRACT as string
 // const REGISTRAR = process.env.REGISTRAR as string
 // const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
 // const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
