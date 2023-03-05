@@ -10,9 +10,9 @@ const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
 // const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
 const DC_ADDRESS = process.env.DC as string
-const REGISTRAR = process.env.REGISTRAR as string
-const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
-const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
+// const REGISTRAR = process.env.REGISTRAR as string
+// const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
+// const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
 const BASE_RENTAL_PRICE_ETH = process.env.BASE_RENTAL_PRICE_ETH as string
 const DURATION_DAYS = process.env.DURATION_DAYS as string
 
@@ -26,9 +26,9 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   // const wrapperExpiry = ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
   // const registrarController: RegistrarController = await ethers.getContractAt('RegistrarController', REGISTRAR_CONTROLLER)
   const dc: DC = await ethers.getContractAt('DC', DC_ADDRESS)
-  const registrar: BaseRegistrarImplementation = await ethers.getContractAt('BaseRegistrarImplementation', REGISTRAR)
-  const registry: ENSRegistry = await ethers.getContractAt('ENSRegistry', REGISTRY)
-  const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
+  // const registrar: BaseRegistrarImplementation = await ethers.getContractAt('BaseRegistrarImplementation', REGISTRAR)
+  // const registry: ENSRegistry = await ethers.getContractAt('ENSRegistry', REGISTRY)
+  // const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
   const priceOracle: LengthBasedPriceOracle = await ethers.getContractAt('LengthBasedPriceOracle', PRICE_ORACLE)
   const price = await priceOracle.price(domain, 0, duration)
   const baseRentalPrice = ethers.utils.parseEther(BASE_RENTAL_PRICE_ETH).toString()
@@ -43,41 +43,19 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   const commitment = await dc.connect(owner).makeCommitment(
     domain,
     owner.address,
-    // duration,
     secret
-    // PUBLIC_RESOLVER,
-    // callData,
-    // reverseRecord,
-    // fuses,
-    // wrapperExpiry
   )
   let txr = await (await dc.connect(owner).commit(commitment)).wait()
   console.log('Commitment Stored', txr.transactionHash)
   txr = await (await dc.connect(owner).register(
     domain,
     url,
-    // owner.address,
-    // duration,
     secret,
-    // PUBLIC_RESOLVER,
-    // callData,
-    // reverseRecord,
-    // fuses,
-    // wrapperExpiry,
     {
       value: priceTotal
     }
   )).wait()
   console.log(`Registered: ${domain}`, txr.transactionHash)
-  // check the owner
-  if (domain === 'polymorpher') {
-    console.log('++++++ OWNER    ++++++')
-    console.log(`owner.address: ${owner.address}`)
-    console.log('tokenId: 85444479313978382769447597158503987460785479043645716011057585575532643322973')
-    console.log(`${domain} owner via registrar: ${await registrar.ownerOf('85444479313978382769447597158503987460785479043645716011057585575532643322973')}`)
-    console.log(`${domain} owner via TLDNameWrapper: ${await tldNameWrapper.ownerOf('85444479313978382769447597158503987460785479043645716011057585575532643322973')}`)
-    console.log('++++++ OWNER end ++++++')
-  }
 
   const publicResolver: PublicResolver = await ethers.getContractAt('PublicResolver', PUBLIC_RESOLVER)
   const TLD = process.env.TLD || 'country'
@@ -86,7 +64,15 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   console.log(`domain: ${domain}`)
   console.log(`FQDN: ${FQDN}`)
   console.log(`node: ${node}`)
-  console.log(`${domain} owner via registry: ${await registry.owner(node)}`)
+  // check the owner
+  // console.log('++++++ OWNER    ++++++')
+  // console.log(`owner.address                                  : ${owner.address}`)
+  // console.log(`TLDNameWrapper.address                         : ${TLD_NAME_WRAPPER}`)
+  // console.log(`${domain} owner via registrar                : ${await registrar.ownerOf(ethers.utils.id(domain))}`)
+  // console.log(`${domain} owner via registry using node      : ${await registry.owner(node)}`)
+  // console.log(`${domain} owner via TLDNameWrapper using node: ${await tldNameWrapper.ownerOf(node)}`)
+  // console.log(`${domain} URI   via TLDNameWrapper using node: ${await tldNameWrapper.uri(node)}`)
+  // console.log('++++++ OWNER end ++++++')
   const [initARecFQDN] = dns.encodeARecord({ name: FQDN, ipAddress: ip })
   const aNameFQDN = 'a.' + FQDN
   const [initARecAFQDN] = dns.encodeARecord({ name: aNameFQDN, ipAddress: ip })
