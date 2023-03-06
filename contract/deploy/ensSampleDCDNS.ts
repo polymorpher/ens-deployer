@@ -12,7 +12,7 @@ const PRICE_ORACLE = process.env.PRICE_ORACLE as string
 const TWEET_ADDRESS = process.env.TWEET_CONTRACT as string
 // const REGISTRAR = process.env.REGISTRAR as string
 // const REGISTRY = process.env.REGISTRY as string || '0x3B02fF1e626Ed7a8fd6eC5299e2C54e1421B626B'
-// const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
+const TLD_NAME_WRAPPER = process.env.TLD_NAME_WRAPPER as string || '0xB7aa4c318000BB9bD16108F81C40D02E48af1C42'
 const BASE_RENTAL_PRICE_ETH = process.env.BASE_RENTAL_PRICE_ETH as string
 const DURATION_DAYS = process.env.DURATION_DAYS as string
 
@@ -28,7 +28,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
   const tweet: Tweet = await ethers.getContractAt('Tweet', TWEET_ADDRESS)
   // const registrar: BaseRegistrarImplementation = await ethers.getContractAt('BaseRegistrarImplementation', REGISTRAR)
   // const registry: ENSRegistry = await ethers.getContractAt('ENSRegistry', REGISTRY)
-  // const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
+  const tldNameWrapper: TLDNameWrapper = await ethers.getContractAt('TLDNameWrapper', TLD_NAME_WRAPPER)
   const priceOracle: LengthBasedPriceOracle = await ethers.getContractAt('LengthBasedPriceOracle', PRICE_ORACLE)
   const price = await priceOracle.price(domain, 0, duration)
   const baseRentalPrice = ethers.utils.parseEther(BASE_RENTAL_PRICE_ETH).toString()
@@ -126,6 +126,30 @@ async function registerDomain (domain: string, owner: SignerWithAddress, url: st
     '0x0000000000000000000000000000000000000000000000000000000000000001'
   )).wait()
   console.log(`Created records for: ${domain + '.' + TLD} and a.${FQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
+
+  // NFT and Metadata Information
+  /*
+
+    function ownerOf(uint256 id) public view override(ERC1155Fuse, INameWrapper) returns (address owner) {
+    function getData(uint256 id) public view override(ERC1155Fuse, INameWrapper) returns (address, uint32, uint64) {
+    function uri(uint256 tokenId) public view override returns (string memory) {
+  */
+
+  const [owner1155, fuses, fuseExpiry] = await tldNameWrapper.getData(node)
+  console.log('======================NFT FROM TLDWRAPPER ====================')
+  console.log(`owner                              : ${owner.address}`)
+  console.log(`domain                             : ${domain}`)
+  console.log(`ethers.utils.id(domain)            : ${ethers.utils.id(domain)}`)
+  console.log(`nodeURL                            : ${domain + '.' + TLD} `)
+  console.log(`node:  namehash.hash(nodeURL)      : ${node}`)
+  console.log(`ethers.utils.id(node)              : ${(ethers.utils.id(node))}`)
+  console.log(`tokenId ethers.BigNumber.from(node): ${ethers.BigNumber.from(node)}`)
+  console.log(`owner                              : ${await tldNameWrapper.ownerOf(node)}`)
+  console.log(`URI                                : ${await tldNameWrapper.uri(node)}`)
+  console.log(`1155owner                          : ${owner1155}`)
+  console.log(`fuses                              : ${fuses}`)
+  console.log(`fuseExpiry                         : ${fuseExpiry}`)
+  console.log('======================NFT FROM TLDWRAPPER ====================')
 }
 
 const func = async function (hre: HardhatRuntimeEnvironment) {
