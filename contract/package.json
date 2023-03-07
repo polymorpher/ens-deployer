@@ -8,14 +8,10 @@
     "scripts": {
         "compile": "npx hardhat compile",
         "deploy": "npx hardhat deploy --tags ENSDeployer",
-        "deploy-dc": "npx hardhat deploy --network local --tags ENSDeployer,DC",
-        "deploy-tweet": "npx hardhat deploy --network local --tags ENSDeployer,DC,Tweet",
-        "deploy-eas": "npx hardhat deploy --network local --tags ENSDeployer,DC,Tweet,EAS",
-        "deploy-sample": "npx hardhat deploy --network local --tags ENSDeployer,DC,EAS,ENSSampleDNS,ENSSampleTweetDNS",
+        "deploy-sample": "npx hardhat deploy --network local --tags ENSDeployer,ENSSampleDNS,ENSSampleTweetDNS",
         "test": "npx hardhat test --network local",
         "test-deploy": "npx hardhat test --network local --grep 'Deployment'",
-        "test-dns": "npx hardhat test --network local --grep 'DNS'",
-        "test-dc": "npx hardhat test --network local --grep 'DC'"
+        "test-dns": "npx hardhat test --network local --grep 'DNS'"
     },
     "devDependencies": {
         "@atixlabs/hardhat-time-n-mine": "^0.0.5",
@@ -32,7 +28,6 @@
         "@types/node": "^18.14.6",
         "@typescript-eslint/eslint-plugin": "^5.54.0",
         "@typescript-eslint/parser": "^5.54.0",
-        "bn.js": "^5.2.1",
         "chai": "^4.3.6",
         "dns-js": "git+https://github.com/polymorpher/node-dns-js",
         "dotenv": "^16.0.1",
