@@ -47,7 +47,7 @@ library ENSRegistryDeployer {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
         ens.setSubnodeOwner(ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL), ENSUtils.ADDR_LABEL, address(reverseRegistrar));
 
-        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
+        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc721")));
         baseRegistrar = new TLDBaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label), metadataService);
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
     }
@@ -59,7 +59,7 @@ library ENSNFTDeployer {
         TLDBaseRegistrarImplementation baseRegistrar,
         string memory tld
     ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
-        metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
+        metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc1155")));
         nameWrapper = new TLDNameWrapper(ens, baseRegistrar, metadataService, tld);
     }
 }
