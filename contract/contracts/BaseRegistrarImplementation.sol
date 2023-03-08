@@ -1,11 +1,14 @@
+// SPDX-License-Identifier: CC-BY-NC-4.0
 pragma solidity >=0.8.4;
 
 import "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {IMetadataService} from "@ensdomains/ens-contracts/contracts/wrapper/IMetadataService.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownable {
+    IMetadataService public metadataService;
     // A map of expiry times
     mapping(uint256 => uint256) expiries;
     // The ENS registry
@@ -15,22 +18,20 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
     // A map of addresses that are authorised to register and renew names.
     mapping(address => bool) public controllers;
     uint256 public constant GRACE_PERIOD = 7 days;
-    bytes4 private constant INTERFACE_META_ID =
-    bytes4(keccak256("supportsInterface(bytes4)"));
+    bytes4 private constant INTERFACE_META_ID = bytes4(keccak256("supportsInterface(bytes4)"));
     bytes4 private constant ERC721_ID =
-    bytes4(
-        keccak256("balanceOf(address)") ^
-        keccak256("ownerOf(uint256)") ^
-        keccak256("approve(address,uint256)") ^
-        keccak256("getApproved(uint256)") ^
-        keccak256("setApprovalForAll(address,bool)") ^
-        keccak256("isApprovedForAll(address,address)") ^
-        keccak256("transferFrom(address,address,uint256)") ^
-        keccak256("safeTransferFrom(address,address,uint256)") ^
-        keccak256("safeTransferFrom(address,address,uint256,bytes)")
-    );
-    bytes4 private constant RECLAIM_ID =
-    bytes4(keccak256("reclaim(uint256,address)"));
+        bytes4(
+            keccak256("balanceOf(address)") ^
+                keccak256("ownerOf(uint256)") ^
+                keccak256("approve(address,uint256)") ^
+                keccak256("getApproved(uint256)") ^
+                keccak256("setApprovalForAll(address,bool)") ^
+                keccak256("isApprovedForAll(address,address)") ^
+                keccak256("transferFrom(address,address,uint256)") ^
+                keccak256("safeTransferFrom(address,address,uint256)") ^
+                keccak256("safeTransferFrom(address,address,uint256,bytes)")
+        );
+    bytes4 private constant RECLAIM_ID = bytes4(keccak256("reclaim(uint256,address)"));
 
     /**
      * v2.1.3 version of _isApprovedOrOwner which calls ownerOf(tokenId) and takes grace period into consideration instead of ERC721.ownerOf(tokenId);
@@ -41,21 +42,15 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
      * @return bool whether the msg.sender is approved for the given token ID,
      *    is an operator of the owner, or is the owner of the token
      */
-    function _isApprovedOrOwner(address spender, uint256 tokenId)
-    internal
-    view
-    override
-    returns (bool)
-    {
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
         address owner = ownerOf(tokenId);
-        return (spender == owner ||
-        getApproved(tokenId) == spender ||
-        isApprovedForAll(owner, spender));
+        return (spender == owner || getApproved(tokenId) == spender || isApprovedForAll(owner, spender));
     }
 
-    constructor(ENS _ens, bytes32 _baseNode) ERC721("", "") {
+    constructor(ENS _ens, bytes32 _baseNode, IMetadataService _metadataService) ERC721("", "") {
         ens = _ens;
         baseNode = _baseNode;
+        metadataService = _metadataService;
     }
 
     modifier live() {
@@ -74,12 +69,7 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
      * @param tokenId uint256 ID of the token to query the owner of
      * @return address currently marked as the owner of the given token ID
      */
-    function ownerOf(uint256 tokenId)
-    public
-    view
-    override(IERC721, ERC721)
-    returns (address)
-    {
+    function ownerOf(uint256 tokenId) public view override(IERC721, ERC721) returns (address) {
         require(expiries[tokenId] > block.timestamp);
         return super.ownerOf(tokenId);
     }
@@ -112,17 +102,34 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
         return expiries[id] + GRACE_PERIOD < block.timestamp;
     }
 
+    /* Metadata service */
+
+    /**
+     * @notice Set the metadata service. Only the owner can do this
+     * @param _metadataService The new metadata service
+     */
+
+    function setMetadataService(IMetadataService _metadataService) public onlyOwner {
+        metadataService = _metadataService;
+    }
+
+    /**
+     * @notice Get the metadata uri
+     * @param tokenId The id of the token
+     * @return string uri of the metadata service
+     */
+
+    function uri(uint256 tokenId) public view returns (string memory) {
+        return metadataService.uri(tokenId);
+    }
+
     /**
      * @dev Register a name.
      * @param id The token ID (keccak256 of the label).
      * @param owner The address that should own the registration.
      * @param duration Duration in seconds for the registration.
      */
-    function register(
-        uint256 id,
-        address owner,
-        uint256 duration
-    ) external override returns (uint256) {
+    function register(uint256 id, address owner, uint256 duration) external override returns (uint256) {
         return _register(id, owner, duration, true);
     }
 
@@ -132,25 +139,13 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
      * @param owner The address that should own the registration.
      * @param duration Duration in seconds for the registration.
      */
-    function registerOnly(
-        uint256 id,
-        address owner,
-        uint256 duration
-    ) external returns (uint256) {
+    function registerOnly(uint256 id, address owner, uint256 duration) external returns (uint256) {
         return _register(id, owner, duration, false);
     }
 
-    function _register(
-        uint256 id,
-        address owner,
-        uint256 duration,
-        bool updateRegistry
-    ) internal live onlyController returns (uint256) {
+    function _register(uint256 id, address owner, uint256 duration, bool updateRegistry) internal live onlyController returns (uint256) {
         require(available(id));
-        require(
-            block.timestamp + duration + GRACE_PERIOD >
-            block.timestamp + GRACE_PERIOD
-        );
+        require(block.timestamp + duration + GRACE_PERIOD > block.timestamp + GRACE_PERIOD);
         // Prevent future overflow
 
         expiries[id] = block.timestamp + duration;
@@ -168,18 +163,10 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
         return block.timestamp + duration;
     }
 
-    function renew(uint256 id, uint256 duration)
-    external
-    override
-    live
-    onlyController
-    returns (uint256)
-    {
+    function renew(uint256 id, uint256 duration) external override live onlyController returns (uint256) {
         require(expiries[id] + GRACE_PERIOD >= block.timestamp);
         // Name must be registered here or in grace period
-        require(
-            expiries[id] + duration + GRACE_PERIOD > duration + GRACE_PERIOD
-        );
+        require(expiries[id] + duration + GRACE_PERIOD > duration + GRACE_PERIOD);
         // Prevent future overflow
 
         expiries[id] += duration;
@@ -195,16 +182,7 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
         ens.setSubnodeOwner(baseNode, bytes32(id), owner);
     }
 
-    function supportsInterface(bytes4 interfaceID)
-    public
-    view
-    override(IERC165, ERC721Enumerable)
-    returns (bool)
-    {
-        return
-        interfaceID == INTERFACE_META_ID ||
-        interfaceID == ERC721_ID ||
-        interfaceID == RECLAIM_ID ||
-        ERC721Enumerable.supportsInterface(interfaceID);
+    function supportsInterface(bytes4 interfaceID) public view override(IERC165, ERC721Enumerable) returns (bool) {
+        return interfaceID == INTERFACE_META_ID || interfaceID == ERC721_ID || interfaceID == RECLAIM_ID || ERC721Enumerable.supportsInterface(interfaceID);
     }
 }

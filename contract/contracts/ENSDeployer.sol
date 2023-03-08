@@ -47,7 +47,8 @@ library ENSRegistryDeployer {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
         ens.setSubnodeOwner(ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL), ENSUtils.ADDR_LABEL, address(reverseRegistrar));
 
-        baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label));
+        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
+        baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label), metadataService);
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
     }
 }
