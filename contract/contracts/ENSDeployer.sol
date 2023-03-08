@@ -6,7 +6,7 @@ import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
 // import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
 import "./TLDMetadataService.sol";
 import "./TLDNameWrapper.sol";
-import "./BaseRegistrarImplementation.sol";
+import "./TLDBaseRegistrarImplementation.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 import {INameWrapper as INameWrapperForPublicResolver, PublicResolver} from "@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol";
 import "@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol";
@@ -31,7 +31,7 @@ library ENSUtils {
 library ENSRegistryDeployer {
     function deployRegistry(
         string memory tld
-    ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, BaseRegistrarImplementation baseRegistrar) {
+    ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, TLDBaseRegistrarImplementation baseRegistrar) {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
 
@@ -47,7 +47,8 @@ library ENSRegistryDeployer {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
         ens.setSubnodeOwner(ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL), ENSUtils.ADDR_LABEL, address(reverseRegistrar));
 
-        baseRegistrar = new BaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label));
+        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
+        baseRegistrar = new TLDBaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label), metadataService);
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
     }
 }
@@ -55,7 +56,7 @@ library ENSRegistryDeployer {
 library ENSNFTDeployer {
     function deployNFTServices(
         ENS ens,
-        BaseRegistrarImplementation baseRegistrar,
+        TLDBaseRegistrarImplementation baseRegistrar,
         string memory tld
     ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
         metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
@@ -68,7 +69,7 @@ library ENSControllerDeployer {
         string memory tld,
         IPriceOracle priceOracle,
         TLDNameWrapper nameWrapper,
-        BaseRegistrarImplementation baseRegistrar,
+        TLDBaseRegistrarImplementation baseRegistrar,
         ReverseRegistrar reverseRegistrar
     ) public returns (RegistrarController registrarController) {
         registrarController = new RegistrarController(
@@ -119,7 +120,7 @@ contract ENSDeployer is Ownable {
     ENSRegistry public ens;
     FIFSRegistrar public fifsRegistrar;
     ReverseRegistrar public reverseRegistrar;
-    BaseRegistrarImplementation public baseRegistrar;
+    TLDBaseRegistrarImplementation public baseRegistrar;
     // nft
     IMetadataService public metadataService; // this needs to be replaced with something real
     TLDNameWrapper public nameWrapper;

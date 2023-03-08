@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ~0.8.17;
 
-import "./BaseRegistrarImplementation.sol";
+import "./TLDBaseRegistrarImplementation.sol";
 import {StringUtils} from "@ensdomains/ens-contracts/contracts/ethregistrar/StringUtils.sol";
 import {Resolver} from "@ensdomains/ens-contracts/contracts/resolvers/Resolver.sol";
 import {ReverseRegistrar} from "@ensdomains/ens-contracts/contracts/registry/ReverseRegistrar.sol";
@@ -36,7 +36,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     string public baseExtension;
 
     uint64 private constant MAX_EXPIRY = type(uint64).max;
-    BaseRegistrarImplementation immutable base;
+    TLDBaseRegistrarImplementation immutable base;
     IPriceOracle public prices;
     uint256 public immutable minCommitmentAge;
     uint256 public immutable maxCommitmentAge;
@@ -50,7 +50,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     event PriceOracleChanged(address oldAddress, address newAddress);
 
     constructor(
-        BaseRegistrarImplementation _base,
+        TLDBaseRegistrarImplementation _base,
         IPriceOracle _prices,
         uint256 _minCommitmentAge,
         uint256 _maxCommitmentAge,
