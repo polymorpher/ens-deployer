@@ -4,7 +4,7 @@ pragma solidity >=0.8.4;
 import "@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol";
 import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
 // import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
-import "./TLDMetaDataService.sol";
+import "./TLDMetadataService.sol";
 import "./TLDNameWrapper.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
@@ -58,7 +58,7 @@ library ENSNFTDeployer {
         BaseRegistrarImplementation baseRegistrar,
         string memory tld
     ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
-        metadataService = IMetadataService(address(new TLDMetadataService("https://modulo.so/ens/metadata")));
+        metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz")));
         nameWrapper = new TLDNameWrapper(ens, baseRegistrar, metadataService, tld);
     }
 }
