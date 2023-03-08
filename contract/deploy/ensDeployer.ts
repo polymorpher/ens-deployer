@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
+import { TLDBaseRegistrarImplementation } from '../typechain-types'
 
 const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET_NANO_USD || '100000000000'
 const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
@@ -50,9 +51,12 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
   console.log('- ens deployed to:', await ensDeployer.ens())
   console.log('- fifsRegistrar deployed to:', await ensDeployer.fifsRegistrar())
   console.log('- reverseRegistrar deployed to:', await ensDeployer.reverseRegistrar())
+  const baseRegistrarAddress = await ensDeployer.baseRegistrar()
   console.log('- baseRegistrar deployed to:', await ensDeployer.baseRegistrar())
+  const baseRegistrar = await ethers.getContractAt('TLDBaseRegistrarImplementation', baseRegistrarAddress) as TLDBaseRegistrarImplementation
+  console.log('- baseRegistrarMetadataService deployed to:', await baseRegistrar.metadataService())
 
-  console.log('- metadataService deployed to:', await ensDeployer.metadataService())
+  console.log('- nameWrapperMetadataService deployed to:', await ensDeployer.metadataService())
   console.log('- nameWrapper deployed to:', await ensDeployer.nameWrapper())
 
   console.log('- registrarController deployed to:', await ensDeployer.registrarController())
@@ -77,6 +81,7 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
     OracleDeployer: oracleDeployer.address,
     ENSDeployer: ENSDeployer.address,
     ENSRegistry: await ens.address,
+    BaseRegistrarMetadataService: await baseRegistrar.metadataService(),
     BaseRegistrarImplementation: await ensDeployer.baseRegistrar(),
     FIFSRegistrar: await ensDeployer.fifsRegistrar(),
     ReverseRegistrar: await ensDeployer.reverseRegistrar(),

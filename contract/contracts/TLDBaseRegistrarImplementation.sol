@@ -4,10 +4,10 @@ pragma solidity >=0.8.4;
 import "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import {IMetadataService} from "@ensdomains/ens-contracts/contracts/wrapper/IMetadataService.sol";
+import "@ensdomains/ens-contracts/contracts/wrapper/IMetadataService.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownable {
+contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownable {
     IMetadataService public metadataService;
     // A map of expiry times
     mapping(uint256 => uint256) expiries;
