@@ -148,7 +148,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         }
 
         if (reverseRecord) {
-            _setReverseRecord(name, resolver, msg.sender);
+            _setReverseRecord(name, resolver, owner);
         }
 
         emit NameRegistered(name, keccak256(bytes(name)), owner, price.base, price.premium, expires);

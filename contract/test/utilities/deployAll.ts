@@ -11,10 +11,10 @@ import {
   PublicResolver,
   RegistrarController,
   ReverseRegistrar,
-  StaticMetadataService,
+  TLDMetadataService,
   TLDNameWrapper,
   UniversalResolver
-} from '../../typechain'
+} from '../../typechain-types'
 import { Context } from 'mocha'
 
 export async function deploy (context: Context) {
@@ -27,7 +27,7 @@ export async function deploy (context: Context) {
   context.fifsRegistrar = await ethers.getContractAt('FIFSRegistrar', addresses.FIFSRegistrar) as FIFSRegistrar
   context.reverseRegistrar = await ethers.getContractAt('ReverseRegistrar', addresses.ReverseRegistrar) as ReverseRegistrar
   context.baseRegistrar = await ethers.getContractAt('BaseRegistrarImplementation', addresses.BaseRegistrarImplementation) as BaseRegistrarImplementation
-  context.metadataService = await ethers.getContractAt('StaticMetadataService', addresses.MetadataService) as StaticMetadataService
+  context.metadataService = await ethers.getContractAt('TLDMetadataService', addresses.MetadataService) as TLDMetadataService
   context.nameWrapper = await ethers.getContractAt('TLDNameWrapper', addresses.NameWrapper) as TLDNameWrapper
   context.registrarController = await ethers.getContractAt('RegistrarController', addresses.ETHRegistrarController) as RegistrarController
   context.publicResolver = await ethers.getContractAt('PublicResolver', addresses.PublicResolver) as PublicResolver
