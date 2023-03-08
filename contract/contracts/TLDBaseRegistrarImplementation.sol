@@ -8,6 +8,7 @@ import "@ensdomains/ens-contracts/contracts/wrapper/IMetadataService.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownable {
+    bool public initialized;
     IMetadataService public metadataService;
     // A map of expiry times
     mapping(uint256 => uint256) expiries;
@@ -61,6 +62,26 @@ contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Own
     modifier onlyController() {
         require(controllers[msg.sender]);
         _;
+    }
+
+    function initialize(uint256[] calldata _ids, address[] calldata _owners, uint256[] calldata _expiries, bool updateRegistry) external onlyOwner {
+        require(!initialized, "BR: already initialized");
+        require(_ids.length == _owners.length && _expiries.length == _owners.length, "BR: unequal length");
+        for (uint256 i = 0; i < _ids.length; i++) {
+            expiries[_ids[i]] = _expiries[i];
+            if (_exists(_ids[i])) {
+                // Name was previously owned, and expired
+                _burn(_ids[i]);
+            }
+            _mint(_owners[i], _ids[i]);
+            if (updateRegistry) {
+                ens.setSubnodeOwner(baseNode, bytes32(_ids[i]), _owners[i]);
+            }
+        }
+    }
+
+    function finishInitialization() external onlyOwner {
+        initialized = true;
     }
 
     /**
