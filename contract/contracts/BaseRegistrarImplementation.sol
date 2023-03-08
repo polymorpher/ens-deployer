@@ -31,7 +31,7 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
     );
     bytes4 private constant RECLAIM_ID =
     bytes4(keccak256("reclaim(uint256,address)"));
-    string private _baseURI;
+    string private _managedBaseURI;
 
     /**
      * v2.1.3 version of _isApprovedOrOwner which calls ownerOf(tokenId) and takes grace period into consideration instead of ERC721.ownerOf(tokenId);
@@ -103,11 +103,11 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
     }
 
     function _baseURI() internal view override returns (string memory) {
-        return _baseURI;
+        return _managedBaseURI;
     }
 
     function setBaseURI(string memory baseURI) public onlyOwner {
-        _baseURI = baseURI;
+        _managedBaseURI = baseURI;
     }
 
     // Returns the expiration timestamp of the specified id.
