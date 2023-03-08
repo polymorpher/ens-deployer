@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
 import { dns } from '../lib'
 import namehash from 'eth-ens-namehash'
-import { LengthBasedPriceOracle, PublicResolver, RegistrarController } from '../typechain'
+import { LengthBasedPriceOracle, PublicResolver, RegistrarController } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
