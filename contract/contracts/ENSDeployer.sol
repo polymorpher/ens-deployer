@@ -6,7 +6,7 @@ import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
 // import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
 import "./TLDMetadataService.sol";
 import "./TLDNameWrapper.sol";
-import "@ensdomains/ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
+import "./BaseRegistrarImplementation.sol";
 import "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 import {INameWrapper as INameWrapperForPublicResolver, PublicResolver} from "@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol";
 import "@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol";
