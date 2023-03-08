@@ -32,6 +32,7 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
     bytes4 private constant RECLAIM_ID =
     bytes4(keccak256("reclaim(uint256,address)"));
     string private _managedBaseURI;
+    bool public initialized;
 
     /**
      * v2.1.3 version of _isApprovedOrOwner which calls ownerOf(tokenId) and takes grace period into consideration instead of ERC721.ownerOf(tokenId);
@@ -57,6 +58,32 @@ contract BaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Ownabl
     constructor(ENS _ens, bytes32 _baseNode) ERC721("", "") {
         ens = _ens;
         baseNode = _baseNode;
+    }
+
+    function initialize(uint256[] calldata _ids, address[] calldata _owners, uint256[] calldata _expiries, bool updateRegistry) external onlyOwner {
+        require(!initialized, "BaseRegistrarImplementation: already initialized");
+
+        require(_ids.length == _owners.length, "BaseRegistrarImplementation: unequal length");
+        require(_expiries.length == _owners.length, "BaseRegistrarImplementation: unequal length");
+
+        for (uint256 i = 0; i < _ids.length; i++) {
+            expiries[_ids[i]] = _expiries[i];
+
+            if (_exists(_ids[i])) {
+                // Name was previously owned, and expired
+                _burn(_ids[i]);
+            }
+
+            _mint(_owners[i], _ids[i]);
+
+            if (updateRegistry) {
+                ens.setSubnodeOwner(baseNode, bytes32(_ids[i]), _owners[i]);
+            }
+        }
+    }
+
+    function finishInitialization() external onlyOwner {
+        initialized = true;
     }
 
     modifier live() {
