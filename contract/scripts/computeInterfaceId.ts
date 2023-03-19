@@ -1,5 +1,3 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { DeployFunction } from 'hardhat-deploy/types'
 import { ethers } from 'hardhat'
 import { Interface } from 'ethers/lib/utils'
 const { makeInterfaceId } = require('@openzeppelin/test-helpers')
