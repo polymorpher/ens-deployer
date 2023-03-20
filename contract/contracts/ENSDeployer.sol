@@ -12,6 +12,7 @@ import "@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol";
 import {NameResolver, ReverseRegistrar} from "@ensdomains/ens-contracts/contracts/registry/ReverseRegistrar.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RegistrarController.sol";
+import "./Multicall3.sol";
 
 library ENSUtils {
     bytes32 public constant RESOLVER_LABEL = keccak256("resolver");
@@ -24,6 +25,12 @@ library ENSUtils {
 
     function namehash(bytes32 label) public pure returns (bytes32) {
         return namehash(bytes32(0), label);
+    }
+}
+
+library MulticallDeployer {
+    function deploy() public returns (Multicall3){
+        return new Multicall3();
     }
 }
 
@@ -115,6 +122,12 @@ library ENSPublicResolverDeployer {
     }
 }
 
+library ENSUniversalResolverDeployer{
+    function deploy(ENS ens) public returns (UniversalResolver) {
+        return new UniversalResolver(address(ens), new string[](0));
+    }
+}
+
 // Construct a set of test ENS contracts.
 contract ENSDeployer is Ownable {
 
@@ -127,6 +140,7 @@ contract ENSDeployer is Ownable {
     RegistrarController public registrarController;
     PublicResolver public publicResolver;
     UniversalResolver public universalResolver;
+    Multicall3 public multicall;
 
     function deployResolver(string memory tld) public onlyOwner {
         bytes32 tld_label = keccak256(bytes(tld));
@@ -141,7 +155,8 @@ contract ENSDeployer is Ownable {
     }
 
     function deployUtils() public onlyOwner {
-        universalResolver = new UniversalResolver(address(ens), new string[](0));
+        universalResolver = ENSUniversalResolverDeployer.deploy(ens);
+        multicall = MulticallDeployer.deploy();
     }
 
     function deployRegistryRegistrar(string memory tld) public onlyOwner {
