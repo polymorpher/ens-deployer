@@ -5,7 +5,7 @@ import SimpleAssetPriceOracleAbi from '../contract/abi/SimpleAssetPriceOracle.js
 import { SimpleAssetPriceOracle } from '../contract/typechain-types'
 
 dotenv.config()
-
+const SENSITIVITY = parseFloat(process.env.SENSITIVITY as string)
 const USD_ORACLE_ADDRESS = process.env.USD_ORACLE_ADDRESS as string
 const provider = new ethers.providers.StaticJsonRpcProvider(process.env.PROVIDER)
 const signer = new ethers.Wallet(process.env.PRIVATE_KEY as string).connect(provider)
@@ -20,7 +20,7 @@ async function loop () {
   const p = parseFloat((await c.latestAnswer()).toString())
   const latest = parseFloat(price) * 1e+9
   const changeRatio = (latest - p) / p
-  if (Math.abs(changeRatio) < 0.00) {
+  if (Math.abs(changeRatio) < SENSITIVITY) {
     console.log(`Change ratio (${changeRatio}) too small, skipping; Latest price: ${price}; Contract price ${p / 1e+9}`)
     return
   }
