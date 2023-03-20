@@ -99,6 +99,7 @@ const hardhatUserconfig: HardhatUserConfig = {
       'SimpleAssetPriceOracle',
       'RegistrarController',
       'TLDBaseRegistrarImplementation',
+      'TLDNameWrapper',
       'ENSDeployer'
     ],
     format: 'json',
