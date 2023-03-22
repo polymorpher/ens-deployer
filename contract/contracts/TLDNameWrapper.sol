@@ -30,13 +30,16 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
     IBaseRegistrar public immutable override registrar;
     IMetadataService public override metadataService;
     mapping(bytes32 => bytes) public override names;
-    string public constant name = "NameWrapper";
     string public TLD;
     bytes32 public immutable TLD_NODE;
     bytes32 private constant ROOT_NODE = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
     INameWrapperUpgrade public upgradeContract;
     uint64 private constant MAX_EXPIRY = type(uint64).max;
+
+    string public contractURI;
+    string name_;
+    string symbol_;
 
     constructor(ENS _ens, IBaseRegistrar _registrar, IMetadataService _metadataService, string memory _tld) {
         ens = _ens;
@@ -51,6 +54,23 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
         _setData(uint256(ROOT_NODE), address(0), uint32(PARENT_CANNOT_CONTROL | CANNOT_UNWRAP), MAX_EXPIRY);
         names[ROOT_NODE] = "\x00";
         names[TLD_NODE] = abi.encodePacked("\x03", TLD, "\x00");
+    }
+
+    function name() view public returns (string memory){
+        return name_;
+    }
+
+    function symbol() view public returns (string memory){
+        return symbol_;
+    }
+
+    function setNameSymbol(string memory _name, string memory _symbol) public onlyOwner() {
+        name_ = _name;
+        symbol_ = _symbol;
+    }
+
+    function setContractUri(string memory _uri) public onlyOwner() {
+        contractURI = _uri;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Fuse, IERC165) returns (bool) {
