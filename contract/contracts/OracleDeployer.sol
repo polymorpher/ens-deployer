@@ -8,10 +8,11 @@ contract OracleDeployer is Ownable {
     USDOracleInterface public usdOracle;
     IPriceOracle public oracle;
 
-    constructor(uint256 _assetPriceNanoUSD, uint256 _baseUnitPrice, uint8[] memory _lengths, uint256[] memory _premiumUnitPrices) {
+    constructor(address _priceManager, uint256 _assetPriceNanoUSD, uint256 _baseUnitPrice, uint8[] memory _lengths, uint256[] memory _premiumUnitPrices) {
         SimpleAssetPriceOracle u = new SimpleAssetPriceOracle(_assetPriceNanoUSD);
         u.grantRole(u.DEFAULT_ADMIN_ROLE(), msg.sender);
         u.grantRole(u.ROLE_FEEDER(), msg.sender);
+        u.grantRole(u.ROLE_FEEDER(), _priceManager);
         u.renounceRole(u.ROLE_FEEDER(), address(this));
         u.renounceRole(u.DEFAULT_ADMIN_ROLE(), address(this));
         usdOracle = USDOracleInterface(address(u));
