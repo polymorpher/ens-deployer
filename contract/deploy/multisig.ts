@@ -7,6 +7,7 @@ import { deployLibs, getDeployedAddresses } from './libs'
 
 const REVENUE_ACCOUNT = process.env.REVENUE_ACCOUNT as string
 const MULTISIG_ACCOUNT = process.env.MULTISIG_ACCOUNT as string
+const METADATA_BASE_URL = process.env.METADATA_BASE_URL as string
 
 const keypress = async () => {
   return new Promise(resolve => process.stdin.once('data', () => {
@@ -21,7 +22,7 @@ const deployDeployerForMultisig = async function (hre: HardhatRuntimeEnvironment
   const { deployer } = await getNamedAccounts()
   const TLD = process.env.TLD || 'country'
   const oracleDeployer = await deployOracle(hre)
-  const { ENSUtils, ENSRegistryDeployer, ENSNFTDeployer, ENSControllerDeployer, ENSPublicResolverDeployer, ENSUniversalResolverDeployer, MulticallDeployer } = await deployLibs(hre)
+  const { ENSUtils, ENSRegistryDeployer, ENSNFTDeployer, ENSControllerDeployer, ENSPublicResolverDeployer, ENSUniversalResolverDeployer, MetadataServiceDeployer, MulticallDeployer } = await deployLibs(hre)
   const ENSDeployer = await deploy('ENSDeployer', {
     from: deployer,
     args: [MULTISIG_ACCOUNT],
@@ -33,12 +34,13 @@ const deployDeployerForMultisig = async function (hre: HardhatRuntimeEnvironment
       ENSControllerDeployer: ENSControllerDeployer.address,
       ENSPublicResolverDeployer: ENSPublicResolverDeployer.address,
       ENSUniversalResolverDeployer: ENSUniversalResolverDeployer.address,
+      MetadataServiceDeployer: MetadataServiceDeployer.address,
       MulticallDeployer: MulticallDeployer.address
     }
   })
   const priceOracle = await oracleDeployer.oracle()
   const ensDeployer = await ethers.getContractAt('ENSDeployer', ENSDeployer.address) as ENSDeployer
-  const deployCalldata = ensDeployer.interface.encodeFunctionData('deploy', [priceOracle, REVENUE_ACCOUNT, TLD])
+  const deployCalldata = ensDeployer.interface.encodeFunctionData('deploy', [priceOracle, REVENUE_ACCOUNT, TLD, METADATA_BASE_URL])
   const transferOwnerCalldata = ensDeployer.interface.encodeFunctionData('transferOwner', [MULTISIG_ACCOUNT])
   console.log('deployer account', deployer)
   console.log(`ENSDeployer owner: ${await ensDeployer.owner()}`)
