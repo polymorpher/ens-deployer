@@ -26,6 +26,8 @@ error CannotUpgrade();
 
 contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IERC721Receiver, ERC20Recoverable {
     using BytesUtils for bytes;
+    bool public initialized;
+
     ENS public immutable override ens;
     IBaseRegistrar public immutable override registrar;
     IMetadataService public override metadataService;
@@ -54,6 +56,27 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
         _setData(uint256(ROOT_NODE), address(0), uint32(PARENT_CANNOT_CONTROL | CANNOT_UNWRAP), MAX_EXPIRY);
         names[ROOT_NODE] = "\x00";
         names[TLD_NODE] = abi.encodePacked("\x03", TLD, "\x00");
+    }
+
+    function initialize(
+        string[] calldata _labels,
+        address[] calldata _owners,
+        uint256[] calldata _durations,
+        address _resolver,
+        uint32 _fuses,
+        uint64 _wrapperExpiry
+    ) external onlyOwner {
+        require(!initialized, "BR: already initialized");
+        require(_labels.length == _owners.length && _durations.length == _owners.length, "BR: unequal length");
+        for (uint256 i = 0; i < _labels.length; i++) {
+            uint256 tokenId = uint256(keccak256(bytes(_labels[i])));
+            uint256 registrarExpiry = registrar.register(tokenId, address(this), _durations[i]);
+            _wrapETH2LD(_labels[i], _owners[i], _fuses, _wrapperExpiry, _resolver);
+        }
+    }
+
+    function finishInitialization() external onlyOwner {
+        initialized = true;
     }
 
     function name() view public returns (string memory){
