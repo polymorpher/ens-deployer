@@ -66,8 +66,8 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
         uint32 _fuses,
         uint64 _wrapperExpiry
     ) external onlyOwner {
-        require(!initialized, "BR: already initialized");
-        require(_labels.length == _owners.length && _durations.length == _owners.length, "BR: unequal length");
+        require(!initialized, "NW: already initialized");
+        require(_labels.length == _owners.length && _durations.length == _owners.length, "NW: unequal length");
         for (uint256 i = 0; i < _labels.length; i++) {
             uint256 tokenId = uint256(keccak256(bytes(_labels[i])));
             uint256 registrarExpiry = registrar.register(tokenId, address(this), _durations[i]);
