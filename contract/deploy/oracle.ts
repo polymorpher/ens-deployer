@@ -6,9 +6,18 @@ const ORACLE_PRICE_NATIVE_ASSET_NANO_USD = process.env.ORACLE_PRICE_NATIVE_ASSET
 const ORACLE_PRICE_BASE_UNIT_PRICE = process.env.ORACLE_PRICE_BASE_UNIT_PRICE || '32'
 const ORACLE_PRICE_PREMIUM = JSON.parse(process.env.ORACLE_PRICE_PREMIUM || '{}')
 const PRICE_MANAGER = process.env.PRICE_MANAGER as string
-
+const ORACLE_DEPLOYER = process.env.ORACLE_DEPLOYER as string
 const deployOracle = async function (hre: HardhatRuntimeEnvironment): Promise<OracleDeployer> {
   console.log({ ORACLE_PRICE_NATIVE_ASSET_NANO_USD, ORACLE_PRICE_BASE_UNIT_PRICE, ORACLE_PRICE_PREMIUM })
+  if (ORACLE_DEPLOYER) {
+    const oracleDeployer = await ethers.getContractAt('OracleDeployer', ORACLE_DEPLOYER) as OracleDeployer
+    console.log(`Reusing oracle deployer at ${ORACLE_DEPLOYER}`)
+    const priceOracle = await oracleDeployer.oracle()
+    const usdOracle = await oracleDeployer.usdOracle()
+    console.log('- priceOracle:', priceOracle)
+    console.log('- usdOracle:', usdOracle)
+    return oracleDeployer
+  }
   const { deployments: { deploy }, getNamedAccounts } = hre
   const { deployer } = await getNamedAccounts()
   const OracleDeployer = await deploy('OracleDeployer', {

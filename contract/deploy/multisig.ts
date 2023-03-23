@@ -44,7 +44,7 @@ const deployDeployerForMultisig = async function (hre: HardhatRuntimeEnvironment
   const transferOwnerCalldata = ensDeployer.interface.encodeFunctionData('transferOwner', [MULTISIG_ACCOUNT])
   console.log('deployer account', deployer)
   console.log(`ENSDeployer owner: ${await ensDeployer.owner()}`)
-  console.log(`Calldata for deploy(${priceOracle},${REVENUE_ACCOUNT},${TLD}): ${deployCalldata}`)
+  console.log(`Calldata for deploy(${priceOracle}, ${REVENUE_ACCOUNT}, ${TLD}, ${METADATA_BASE_URL}): ${deployCalldata}`)
   console.log(`Calldata for transferOwner(${MULTISIG_ACCOUNT}): ${transferOwnerCalldata}`)
   console.log('Press any key to continue after you complete deploying on multisig')
   await keypress()
