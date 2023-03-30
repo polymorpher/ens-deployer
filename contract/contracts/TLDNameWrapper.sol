@@ -26,17 +26,22 @@ error CannotUpgrade();
 
 contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IERC721Receiver, ERC20Recoverable {
     using BytesUtils for bytes;
+    bool public initialized;
+
     ENS public immutable override ens;
     IBaseRegistrar public immutable override registrar;
     IMetadataService public override metadataService;
     mapping(bytes32 => bytes) public override names;
-    string public constant name = "NameWrapper";
     string public TLD;
     bytes32 public immutable TLD_NODE;
     bytes32 private constant ROOT_NODE = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
     INameWrapperUpgrade public upgradeContract;
     uint64 private constant MAX_EXPIRY = type(uint64).max;
+
+    string public contractURI;
+    string name_;
+    string symbol_;
 
     constructor(ENS _ens, IBaseRegistrar _registrar, IMetadataService _metadataService, string memory _tld) {
         ens = _ens;
@@ -51,6 +56,44 @@ contract TLDNameWrapper is Ownable, ERC1155Fuse, INameWrapper, Controllable, IER
         _setData(uint256(ROOT_NODE), address(0), uint32(PARENT_CANNOT_CONTROL | CANNOT_UNWRAP), MAX_EXPIRY);
         names[ROOT_NODE] = "\x00";
         names[TLD_NODE] = abi.encodePacked("\x03", TLD, "\x00");
+    }
+
+    function initialize(
+        string[] calldata _labels,
+        address[] calldata _owners,
+        uint256[] calldata _durations,
+        address _resolver,
+        uint32 _fuses,
+        uint64 _wrapperExpiry
+    ) external onlyOwner {
+        require(!initialized, "NW: already initialized");
+        require(_labels.length == _owners.length && _durations.length == _owners.length, "NW: unequal length");
+        for (uint256 i = 0; i < _labels.length; i++) {
+            uint256 tokenId = uint256(keccak256(bytes(_labels[i])));
+            uint256 registrarExpiry = registrar.register(tokenId, address(this), _durations[i]);
+            _wrapETH2LD(_labels[i], _owners[i], _fuses, _wrapperExpiry, _resolver);
+        }
+    }
+
+    function finishInitialization() external onlyOwner {
+        initialized = true;
+    }
+
+    function name() view public returns (string memory){
+        return name_;
+    }
+
+    function symbol() view public returns (string memory){
+        return symbol_;
+    }
+
+    function setNameSymbol(string memory _name, string memory _symbol) public onlyOwner() {
+        name_ = _name;
+        symbol_ = _symbol;
+    }
+
+    function setContractUri(string memory _uri) public onlyOwner() {
+        contractURI = _uri;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Fuse, IERC165) returns (bool) {

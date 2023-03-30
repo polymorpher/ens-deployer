@@ -1,0 +1,13 @@
+[Unit]
+Description=1NS Simple Price Oracle Manager
+After=network.target
+
+[Service]
+Type=simple
+User=worker
+WorkingDirectory=/opt/ens-deployer/simpleoracle
+ExecStart=/usr/bin/npx ts-node /opt/ens-deployer/simpleoracle/run.ts
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

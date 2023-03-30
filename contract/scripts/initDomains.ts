@@ -1,11 +1,19 @@
 import { ethers } from 'hardhat'
-import TLDBaseRegistrarImplementationAbi from '../abi/TLDBaseRegistrarImplementation.json'
+import TLDNameWrapperAbi from '../abi/TLDNameWrapper.json'
 import fs from 'fs/promises'
+import assert from 'assert'
+import { TLDNameWrapper } from '../typechain-types'
 
-const BASE_REGISTRAR = process.env.BASE_REGISTRAR || '0xaC60e74e5906C60D96E2645387952e6a7DE224dc'
+const NAME_WRAPPER = process.env.NAME_WRAPPER || '0x4Cd2563118e57B19179d8DC033f2B0C5B5D69ff5'
+const RESOLVER = process.env.RESOLVER || '0x46E37034Ffc87a969d1a581748Acf6a94Bc7415D'
+const FUSES = parseInt(process.env.FUSES || '0')
+const EXPIRY = process.env.EXPIRY || ethers.BigNumber.from(new Uint8Array(8).fill(255)).toString()
+const INPUT_FILE = process.env.INPUT_FILE as string
 async function main () {
-  const br = new ethers.Contract(BASE_REGISTRAR, TLDBaseRegistrarImplementationAbi)
-  const records = await fs.readFile(process.env.INPUT_FILE as string, { encoding: 'utf-8' })
+  assert(!!INPUT_FILE, 'INPUT_FILE is missing')
+  console.log({ NAME_WRAPPER, RESOLVER, INPUT_FILE, FUSES, EXPIRY })
+  const nw = new ethers.Contract(NAME_WRAPPER, TLDNameWrapperAbi) as TLDNameWrapper
+  const records = await fs.readFile(INPUT_FILE, { encoding: 'utf-8' })
   const entries = records.split('\n').map(r => {
     const parts = r.split(' ')
     const name = parts[1].split('.')[0]
@@ -13,17 +21,16 @@ async function main () {
     return { name, wallet }
   })
   console.log(entries)
-  const ids = entries.map(e => ethers.utils.id(e.name))
+  const labels = entries.map(e => e.name)
   const wallets = entries.map(e => e.wallet)
-  const expires = new Array(ids.length).fill(1687112242)
-  for (let i = 0; i < ids.length; i += 50) {
-    const idChunk = ids.slice(i, Math.min(i + 50, ids.length))
-    const namesChunk = entries.slice(i, Math.min(i + 50, wallets.length)).map(e => e.name)
+  const durations = new Array(labels.length).fill(3600 * 24 * 90)
+  for (let i = 0; i < labels.length; i += 50) {
+    const labelChunk = labels.slice(i, Math.min(i + 50, labels.length))
     const walletChunk = wallets.slice(i, Math.min(i + 50, wallets.length))
-    const expireChunk = expires.slice(i, Math.min(i + 50, expires.length))
-    const data = br.interface.encodeFunctionData('initialize', [idChunk, walletChunk, expireChunk, true])
-    console.log('names: ', namesChunk)
-    console.log(`chunk ${i} to ${Math.min(i + 50, ids.length)}: `, data)
+    const durationChunk = durations.slice(i, Math.min(i + 50, durations.length))
+    const data = nw.interface.encodeFunctionData('initialize', [labelChunk, walletChunk, durationChunk, RESOLVER, FUSES, EXPIRY])
+    console.log('labels: ', JSON.stringify(labels))
+    console.log(`chunk ${i} to ${Math.min(i + 50, labels.length)}: `, data)
   }
 }
 

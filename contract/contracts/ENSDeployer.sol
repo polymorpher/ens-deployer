@@ -33,10 +33,16 @@ library MulticallDeployer {
         return new Multicall3();
     }
 }
-
+library MetadataServiceDeployer{
+    function deploy(string memory baseUrl) public returns (IMetadataService metadata721, IMetadataService metadata1155){
+        metadata721 = IMetadataService(address(new TLDMetadataService(string.concat(baseUrl, "/erc721"))));
+        metadata1155 = IMetadataService(address(new TLDMetadataService(string.concat(baseUrl, "/erc1155"))));
+    }
+}
 library ENSRegistryDeployer {
     function deployRegistryRegistrar(
-        string memory tld
+        string memory tld,
+        IMetadataService metadataService
     ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, TLDBaseRegistrarImplementation baseRegistrar) {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
@@ -53,7 +59,7 @@ library ENSRegistryDeployer {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
         ens.setSubnodeOwner(ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL), ENSUtils.ADDR_LABEL, address(reverseRegistrar));
 
-        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc721")));
+
         baseRegistrar = new TLDBaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label), metadataService);
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
     }
@@ -63,9 +69,9 @@ library ENSNFTDeployer {
     function deployNFTServices(
         ENS ens,
         TLDBaseRegistrarImplementation baseRegistrar,
-        string memory tld
-    ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
-        metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc1155")));
+        string memory tld,
+        IMetadataService metadataService
+    ) public returns (TLDNameWrapper nameWrapper) {
         nameWrapper = new TLDNameWrapper(ens, baseRegistrar, metadataService, tld);
     }
 }
@@ -135,7 +141,8 @@ contract ENSDeployer is Ownable {
     FIFSRegistrar public fifsRegistrar;
     ReverseRegistrar public reverseRegistrar;
     TLDBaseRegistrarImplementation public baseRegistrar;
-    IMetadataService public metadataService;
+    IMetadataService public metadataService721;
+    IMetadataService public metadataService1155;
     TLDNameWrapper public nameWrapper;
     RegistrarController public registrarController;
     PublicResolver public publicResolver;
@@ -159,12 +166,16 @@ contract ENSDeployer is Ownable {
         multicall = MulticallDeployer.deploy();
     }
 
+    function deployMetadataServices(string memory _baseUrl) public onlyOwner {
+        (metadataService721, metadataService1155) = MetadataServiceDeployer.deploy(_baseUrl);
+    }
+
     function deployRegistryRegistrar(string memory tld) public onlyOwner {
-        (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistryRegistrar(tld);
+        (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistryRegistrar(tld, metadataService721);
     }
 
     function deployNFTServices(string memory tld) public onlyOwner {
-        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar, tld);
+        nameWrapper = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar, tld, metadataService1155);
         baseRegistrar.addController(address(nameWrapper));
     }
 
@@ -183,7 +194,8 @@ contract ENSDeployer is Ownable {
         transferOwnership(_ownerAccount);
     }
 
-    function deploy(IPriceOracle _priceOracle, address _revenueAccount, string memory _tld) public onlyOwner{
+    function deploy(IPriceOracle _priceOracle, address _revenueAccount, string memory _tld, string memory _baseUrl) public onlyOwner{
+        deployMetadataServices(_baseUrl);
         deployRegistryRegistrar(_tld);
         deployNFTServices(_tld);
         deployController(_tld, _priceOracle, _revenueAccount);

@@ -81,6 +81,11 @@
         "internalType": "string",
         "name": "_tld",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_baseUrl",
+        "type": "string"
       }
     ],
     "name": "deploy",
@@ -107,6 +112,19 @@
       }
     ],
     "name": "deployController",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_baseUrl",
+        "type": "string"
+      }
+    ],
+    "name": "deployMetadataServices",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -185,7 +203,20 @@
   },
   {
     "inputs": [],
-    "name": "metadataService",
+    "name": "metadataService1155",
+    "outputs": [
+      {
+        "internalType": "contract IMetadataService",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "metadataService721",
     "outputs": [
       {
         "internalType": "contract IMetadataService",
