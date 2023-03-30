@@ -1,14 +1,15 @@
 {
     "name": "ens-deploy",
     "version": "0.0.1",
-    "license": "Apache-2.0",
+    "license": "CC-BY-NC-4.0",
     "engines": {
         "node": ">=16"
     },
     "scripts": {
         "compile": "npx hardhat compile",
-        "deploy": "npx hardhat deploy --tags ENSDeployer",
-        "deploy-sample": "npx hardhat deploy --network local --tags ENSSampleDNS",
+        "multisig": "npx hardhat deploy --tags Multisig",
+        "deployer": "npx hardhat deploy --tags Deployer",
+        "dns-sample": "npx hardhat deploy --network local --tags DNSSample",
         "test": "npx hardhat test --network local",
         "test-deploy": "npx hardhat test --network local --grep 'Deployment'",
         "test-dns": "npx hardhat test --network local --grep 'DNS'"

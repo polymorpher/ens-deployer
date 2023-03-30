@@ -34,6 +34,23 @@ contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Own
         );
     bytes4 private constant RECLAIM_ID = bytes4(keccak256("reclaim(uint256,address)"));
 
+    string public contractURI;
+    string name_;
+    string symbol_;
+
+    function name() view public override returns (string memory){
+        return name_;
+    }
+
+    function symbol() view public override returns (string memory){
+        return symbol_;
+    }
+
+    function setNameSymbol(string memory _name, string memory _symbol) public onlyOwner() {
+        name_ = _name;
+        symbol_ = _symbol;
+    }
+
     /**
      * v2.1.3 version of _isApprovedOrOwner which calls ownerOf(tokenId) and takes grace period into consideration instead of ERC721.ownerOf(tokenId);
      * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.1.3/contracts/token/ERC721/ERC721.sol#L187
@@ -52,6 +69,10 @@ contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Own
         ens = _ens;
         baseNode = _baseNode;
         metadataService = _metadataService;
+    }
+
+    function setContractUri(string memory _uri) public onlyOwner() {
+        contractURI = _uri;
     }
 
     modifier live() {
@@ -140,7 +161,7 @@ contract TLDBaseRegistrarImplementation is ERC721Enumerable, IBaseRegistrar, Own
      * @return string uri of the metadata service
      */
 
-    function uri(uint256 tokenId) public view returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         return metadataService.uri(tokenId);
     }
 

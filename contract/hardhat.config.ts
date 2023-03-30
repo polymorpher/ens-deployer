@@ -98,7 +98,9 @@ const hardhatUserconfig: HardhatUserConfig = {
       'LengthBasedPriceOracle',
       'SimpleAssetPriceOracle',
       'RegistrarController',
-      'TLDBaseRegistrarImplementation'
+      'TLDBaseRegistrarImplementation',
+      'TLDNameWrapper',
+      'ENSDeployer'
     ],
     format: 'json',
     spacing: 2

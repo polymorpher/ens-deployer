@@ -13,6 +13,8 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {INameWrapper} from "@ensdomains/ens-contracts/contracts/wrapper/INameWrapper.sol";
 import {ERC20Recoverable} from "@ensdomains/ens-contracts/contracts/utils/ERC20Recoverable.sol";
 
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
 /**
  * @dev A registrar controller for registering and renewing names at fixed cost.
  */
@@ -43,6 +45,8 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     ReverseRegistrar public immutable reverseRegistrar;
     INameWrapper public immutable nameWrapper;
 
+    address public immutable revenueAccount;
+
     mapping(bytes32 => uint256) public commitments;
 
     event NameRegistered(string name, bytes32 indexed label, address indexed owner, uint256 baseCost, uint256 premium, uint256 expires);
@@ -57,7 +61,8 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         ReverseRegistrar _reverseRegistrar,
         INameWrapper _nameWrapper,
         bytes32 _baseNode,
-        string memory _baseExtension
+        string memory _baseExtension,
+        address _revenueAccount
     ) {
         if (_maxCommitmentAge <= _minCommitmentAge) {
             revert MaxCommitmentAgeTooLow();
@@ -75,6 +80,7 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         nameWrapper = _nameWrapper;
         baseNode = _baseNode;
         baseExtension = _baseExtension;
+        revenueAccount = _revenueAccount;
     }
 
     function rentPrice(string memory name, uint256 duration) public view override returns (IPriceOracle.Price memory price) {
@@ -189,7 +195,9 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     }
 
     function withdraw() public {
-        payable(owner()).transfer(address(this).balance);
+        require(msg.sender == owner() || msg.sender == revenueAccount, "RC: must be owner or revenue account");
+        (bool success,) = revenueAccount.call{value : address(this).balance}("");
+        require(success, "RC: failed to withdraw");
     }
 
     function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
@@ -227,6 +235,6 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
     }
 
     function _setReverseRecord(string memory name, address resolver, address owner) internal {
-        reverseRegistrar.setNameForAddr(msg.sender, owner, resolver, string.concat(name, ".", baseExtension));
+        reverseRegistrar.setNameForAddr(owner, owner, resolver, string.concat(name, ".", baseExtension));
     }
 }

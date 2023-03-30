@@ -3,7 +3,6 @@ pragma solidity >=0.8.4;
 
 import "@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol";
 import "@ensdomains/ens-contracts/contracts/registry/FIFSRegistrar.sol";
-// import "@ensdomains/ens-contracts/contracts/wrapper/StaticMetadataService.sol";
 import "./TLDMetadataService.sol";
 import "./TLDNameWrapper.sol";
 import "./TLDBaseRegistrarImplementation.sol";
@@ -13,6 +12,7 @@ import "@ensdomains/ens-contracts/contracts/utils/UniversalResolver.sol";
 import {NameResolver, ReverseRegistrar} from "@ensdomains/ens-contracts/contracts/registry/ReverseRegistrar.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RegistrarController.sol";
+import "./Multicall3.sol";
 
 library ENSUtils {
     bytes32 public constant RESOLVER_LABEL = keccak256("resolver");
@@ -28,9 +28,21 @@ library ENSUtils {
     }
 }
 
+library MulticallDeployer {
+    function deploy() public returns (Multicall3){
+        return new Multicall3();
+    }
+}
+library MetadataServiceDeployer{
+    function deploy(string memory baseUrl) public returns (IMetadataService metadata721, IMetadataService metadata1155){
+        metadata721 = IMetadataService(address(new TLDMetadataService(string.concat(baseUrl, "/erc721"))));
+        metadata1155 = IMetadataService(address(new TLDMetadataService(string.concat(baseUrl, "/erc1155"))));
+    }
+}
 library ENSRegistryDeployer {
-    function deployRegistry(
-        string memory tld
+    function deployRegistryRegistrar(
+        string memory tld,
+        IMetadataService metadataService
     ) public returns (ENSRegistry ens, FIFSRegistrar fifsRegistrar, ReverseRegistrar reverseRegistrar, TLDBaseRegistrarImplementation baseRegistrar) {
         bytes32 tld_label = keccak256(bytes(tld));
         ens = new ENSRegistry();
@@ -47,7 +59,7 @@ library ENSRegistryDeployer {
         ens.setSubnodeOwner(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL, address(this));
         ens.setSubnodeOwner(ENSUtils.namehash(bytes32(0), ENSUtils.REVERSE_REGISTRAR_LABEL), ENSUtils.ADDR_LABEL, address(reverseRegistrar));
 
-        IMetadataService metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc721")));
+
         baseRegistrar = new TLDBaseRegistrarImplementation(ens, ENSUtils.namehash(tld_label), metadataService);
         ens.setSubnodeOwner(bytes32(0), tld_label, address(this));
     }
@@ -57,9 +69,9 @@ library ENSNFTDeployer {
     function deployNFTServices(
         ENS ens,
         TLDBaseRegistrarImplementation baseRegistrar,
-        string memory tld
-    ) public returns (IMetadataService metadataService, TLDNameWrapper nameWrapper) {
-        metadataService = IMetadataService(address(new TLDMetadataService("https://1ns-metadata.hiddenstate.xyz/erc1155")));
+        string memory tld,
+        IMetadataService metadataService
+    ) public returns (TLDNameWrapper nameWrapper) {
         nameWrapper = new TLDNameWrapper(ens, baseRegistrar, metadataService, tld);
     }
 }
@@ -70,7 +82,8 @@ library ENSControllerDeployer {
         IPriceOracle priceOracle,
         TLDNameWrapper nameWrapper,
         TLDBaseRegistrarImplementation baseRegistrar,
-        ReverseRegistrar reverseRegistrar
+        ReverseRegistrar reverseRegistrar,
+        address revenueAccount
     ) public returns (RegistrarController registrarController) {
         registrarController = new RegistrarController(
             baseRegistrar,
@@ -80,7 +93,8 @@ library ENSControllerDeployer {
             reverseRegistrar,
             nameWrapper,
             ENSUtils.namehash(keccak256(bytes(tld))),
-            tld
+            tld,
+            revenueAccount
         );
     }
 }
@@ -114,22 +128,26 @@ library ENSPublicResolverDeployer {
     }
 }
 
+library ENSUniversalResolverDeployer{
+    function deploy(ENS ens) public returns (UniversalResolver) {
+        return new UniversalResolver(address(ens), new string[](0));
+    }
+}
+
 // Construct a set of test ENS contracts.
 contract ENSDeployer is Ownable {
-    // core
+
     ENSRegistry public ens;
     FIFSRegistrar public fifsRegistrar;
     ReverseRegistrar public reverseRegistrar;
     TLDBaseRegistrarImplementation public baseRegistrar;
-    // nft
-    IMetadataService public metadataService; // this needs to be replaced with something real
+    IMetadataService public metadataService721;
+    IMetadataService public metadataService1155;
     TLDNameWrapper public nameWrapper;
-
     RegistrarController public registrarController;
-
     PublicResolver public publicResolver;
-
     UniversalResolver public universalResolver;
+    Multicall3 public multicall;
 
     function deployResolver(string memory tld) public onlyOwner {
         bytes32 tld_label = keccak256(bytes(tld));
@@ -144,20 +162,25 @@ contract ENSDeployer is Ownable {
     }
 
     function deployUtils() public onlyOwner {
-        universalResolver = new UniversalResolver(address(ens), new string[](0));
+        universalResolver = ENSUniversalResolverDeployer.deploy(ens);
+        multicall = MulticallDeployer.deploy();
     }
 
-    function deployRegistrar(string memory tld) public onlyOwner {
-        (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistry(tld);
+    function deployMetadataServices(string memory _baseUrl) public onlyOwner {
+        (metadataService721, metadataService1155) = MetadataServiceDeployer.deploy(_baseUrl);
+    }
+
+    function deployRegistryRegistrar(string memory tld) public onlyOwner {
+        (ens, fifsRegistrar, reverseRegistrar, baseRegistrar) = ENSRegistryDeployer.deployRegistryRegistrar(tld, metadataService721);
     }
 
     function deployNFTServices(string memory tld) public onlyOwner {
-        (metadataService, nameWrapper) = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar, tld);
+        nameWrapper = ENSNFTDeployer.deployNFTServices(ens, baseRegistrar, tld, metadataService1155);
         baseRegistrar.addController(address(nameWrapper));
     }
 
-    function deployController(string memory tld, IPriceOracle priceOracle) public onlyOwner {
-        registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar);
+    function deployController(string memory tld, IPriceOracle priceOracle, address revenueAccount) public onlyOwner {
+        registrarController = ENSControllerDeployer.deployController(tld, priceOracle, nameWrapper, baseRegistrar, reverseRegistrar, revenueAccount);
         nameWrapper.setController(address(registrarController), true);
         reverseRegistrar.setController(address(registrarController), true);
     }
@@ -167,13 +190,18 @@ contract ENSDeployer is Ownable {
         ens.setSubnodeOwner(bytes32(0), tld_label, address(baseRegistrar));
     }
 
-    constructor(string memory tld, IPriceOracle priceOracle) {
-        deployRegistrar(tld);
-        deployNFTServices(tld);
-        deployController(tld, priceOracle);
-        deployResolver(tld);
+    constructor(address _ownerAccount) {
+        transferOwnership(_ownerAccount);
+    }
+
+    function deploy(IPriceOracle _priceOracle, address _revenueAccount, string memory _tld, string memory _baseUrl) public onlyOwner{
+        deployMetadataServices(_baseUrl);
+        deployRegistryRegistrar(_tld);
+        deployNFTServices(_tld);
+        deployController(_tld, _priceOracle, _revenueAccount);
+        deployResolver(_tld);
         deployUtils();
-        setOwnership(tld);
+        setOwnership(_tld);
     }
 
     function transferOwner(address dest) external onlyOwner {

@@ -40,6 +40,11 @@
         "internalType": "string",
         "name": "_baseExtension",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_revenueAccount",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -617,6 +622,19 @@
         "internalType": "struct IPriceOracle.Price",
         "name": "price",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "revenueAccount",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

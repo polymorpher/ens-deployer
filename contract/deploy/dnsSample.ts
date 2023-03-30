@@ -128,6 +128,6 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
   await registerDomain('testlongdomain', bob, '128.0.0.1')
 }
 
-func.tags = ['ENSSampleDNS']
-func.dependencies = ['ENSDeployer']
+func.tags = ['DNSSample']
+func.dependencies = ['Deployer']
 export default func
