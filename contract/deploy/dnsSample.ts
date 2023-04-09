@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ethers } from 'hardhat'
 import { dns } from '../lib'
 import namehash from 'eth-ens-namehash'
-import { LengthBasedPriceOracle, PublicResolver, RegistrarController } from '../typechain'
+import { LengthBasedPriceOracle, PublicResolver, RegistrarController } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
@@ -121,8 +121,8 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
 
 const f = async function (hre: HardhatRuntimeEnvironment) {
   // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
-  if (hre.network.name !== 'local') {
-    throw new Error('Should only deploy sample DNS registration in local network')
+  if (hre.network.name !== 'local' && hre.network.name !== 'hardhat') {
+    throw new Error('Should only deploy sample DNS registration in hardhat or local network')
   }
   console.log(`about to registerDomain in network: ${hre.network.name}`)
   // The 10 signer accounts represent: deployer, operatorA, operatorB, operatorC, alice, bob, carol, ernie, dora
