@@ -9,7 +9,7 @@
         "compile": "npx hardhat compile",
         "multisig": "npx hardhat deploy --tags Multisig",
         "deployer": "npx hardhat deploy --tags Deployer",
-        "dns-sample": "npx hardhat deploy --network local --tags DNSSample",
+        "dns-sample": "npx hardhat deploy --network local --tags 'Deployer,DNSSample'",
         "test": "npx hardhat test --network local",
         "test-deploy": "npx hardhat test --network local --grep 'Deployment'",
         "test-dns": "npx hardhat test --network local --grep 'DNS'"
