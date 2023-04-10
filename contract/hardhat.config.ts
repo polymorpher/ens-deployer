@@ -100,7 +100,9 @@ const hardhatUserconfig: HardhatUserConfig = {
       'RegistrarController',
       'TLDBaseRegistrarImplementation',
       'TLDNameWrapper',
-      'ENSDeployer'
+      'ENSDeployer',
+      'PublicResolver',
+      'Registry'
     ],
     format: 'json',
     spacing: 2
