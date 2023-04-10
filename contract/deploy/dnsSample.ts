@@ -9,6 +9,14 @@ const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
 const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
 
+const sleep = async (milliseconds) => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
+const wait = async (seconds) => {
+  console.log(`wait: ${seconds}`)
+  await sleep(seconds * 1000)
+}
+
 async function registerDomain (domain: string, owner: SignerWithAddress, ip: string) {
   const duration = ethers.BigNumber.from(28 * 24 * 3600)
   const secret = new Uint8Array(32).fill(0)
@@ -36,6 +44,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   )
   let txr = await (await registrarController.connect(owner).commit(commitment)).wait()
   console.log('Commitment Stored', txr.transactionHash)
+  await wait(2)
   txr = await (await registrarController.connect(owner).register(
     domain,
     owner.address,
@@ -110,7 +119,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   console.log(`Created records for: ${domain + '.' + TLD} and a.${FQDN} same ip address: ${ip}; tx ${txr.transactionHash}`)
 }
 
-const func = async function (hre: HardhatRuntimeEnvironment) {
+const f = async function (hre: HardhatRuntimeEnvironment) {
   // Add some records for local testing (used by go-1ns, a CoreDNS plugin)
   if (hre.network.name !== 'local' && hre.network.name !== 'hardhat') {
     throw new Error('Should only deploy sample DNS registration in hardhat or local network')
@@ -125,9 +134,9 @@ const func = async function (hre: HardhatRuntimeEnvironment) {
   await registerDomain('test', alice, '128.0.0.1')
   await registerDomain('testa', alice, '128.0.0.2')
   await registerDomain('testb', bob, '128.0.0.3')
-  await registerDomain('testlongdomain', bob, '128.0.0.1')
+  await registerDomain('testlongdomain', bob, '128.0.0.4')
+  await registerDomain('testxyz', alice, '128.0.0.5')
 }
 
-func.tags = ['DNSSample']
-func.dependencies = ['Deployer']
-export default func
+f.tags = ['DNSSample']
+export default f
