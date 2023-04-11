@@ -9,10 +9,10 @@ const PUBLIC_RESOLVER = process.env.PUBLIC_RESOLVER as string
 const REGISTRAR_CONTROLLER = process.env.REGISTRAR_CONTROLLER as string
 const PRICE_ORACLE = process.env.PRICE_ORACLE as string
 
-const sleep = async (milliseconds) => {
+const sleep = async (milliseconds: number) => {
   return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
-const wait = async (seconds) => {
+const wait = async (seconds: number) => {
   console.log(`wait: ${seconds}`)
   await sleep(seconds * 1000)
 }
@@ -44,7 +44,7 @@ async function registerDomain (domain: string, owner: SignerWithAddress, ip: str
   )
   let txr = await (await registrarController.connect(owner).commit(commitment)).wait()
   console.log('Commitment Stored', txr.transactionHash)
-  await wait(2)
+  await wait(0) // modify this number to align with minCommitmentAge
   txr = await (await registrarController.connect(owner).register(
     domain,
     owner.address,
