@@ -181,15 +181,15 @@ contract RegistrarController is Ownable, IETHRegistrarController, IERC165, ERC20
         bytes32 labelhash = keccak256(bytes(name));
         uint256 tokenId = uint256(labelhash);
         IPriceOracle.Price memory price = rentPrice(name, duration);
-        if (msg.value < price.base) {
+        if (msg.value < price.base + price.premium) {
             revert InsufficientValue();
         }
         uint256 expires;
         expires = nameWrapper.renew(tokenId, duration, fuses, wrapperExpiry);
 
-        if (msg.value > price.base) {
-            payable(msg.sender).transfer(msg.value - price.base);
-        }
+//        if (msg.value > price.base + price.premium) {
+//            payable(msg.sender).transfer(msg.value - price.base - price.premium);
+//        }
 
         emit NameRenewed(name, labelhash, msg.value, expires);
     }
